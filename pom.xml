@@ -30,6 +30,9 @@
         <netty.version>4.1.35.Final</netty.version>
         <feign.version>8.18.0</feign.version>
         <lombok.version>1.18.24</lombok.version>
+        <hibernate-validator.version>5.2.4.Final</hibernate-validator.version>
+        <jdbc.version>2.3.4.RELEASE</jdbc.version>
+        <mysql-connector.version>8.0.22</mysql-connector.version>
     </properties>
 
     <dependencies>
@@ -82,6 +85,21 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!--MySQL JDBC驱动 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-jdbc</artifactId>
+                <version>${jdbc.version}</version>
+            </dependency>
+
+            <!--MySQL -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql-connector.version}</version>
+                <scope>runtime</scope>
             </dependency>
 
             <!-- 参数校验 -->
