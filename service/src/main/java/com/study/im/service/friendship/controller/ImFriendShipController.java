@@ -25,7 +25,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/importFriendShip")
-    public ResponseVO importFriendShip(@RequestBody @Validated ImportFriendShipReq req, Integer appId){
+    public ResponseVO importFriendShip(@RequestBody @Validated ImportFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.importFriendShip(req);
     }
@@ -38,7 +38,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/addFriend")
-    public ResponseVO addFriend(@RequestBody @Validated AddFriendReq req, Integer appId){
+    public ResponseVO addFriend(@RequestBody @Validated AddFriendReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.addFriend(req);
     }
@@ -51,7 +51,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/updateFriend")
-    public ResponseVO updateFriend(@RequestBody @Validated UpdateFriendReq req, Integer appId){
+    public ResponseVO updateFriend(@RequestBody @Validated UpdateFriendReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.updateFriend(req);
     }
@@ -64,7 +64,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/deleteFriend")
-    public ResponseVO deleteFriend(@RequestBody @Validated DeleteFriendReq req, Integer appId){
+    public ResponseVO deleteFriend(@RequestBody @Validated DeleteFriendReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.deleteFriend(req);
     }
@@ -77,7 +77,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/deleteAllFriend")
-    public ResponseVO deleteAllFriend(@RequestBody @Validated DeleteFriendReq req, Integer appId){
+    public ResponseVO deleteAllFriend(@RequestBody @Validated DeleteFriendReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.deleteAllFriend(req);
     }
@@ -90,7 +90,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/getAllFriendShip")
-    public ResponseVO getAllFriendShip(@RequestBody @Validated GetAllFriendShipReq req, Integer appId){
+    public ResponseVO getAllFriendShip(@RequestBody @Validated GetAllFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.getAllFriendShip(req);
     }
@@ -103,7 +103,7 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/getRelation")
-    public ResponseVO getRelation(@RequestBody @Validated GetRelationReq req, Integer appId){
+    public ResponseVO getRelation(@RequestBody @Validated GetRelationReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.getRelation(req);
     }
@@ -116,11 +116,50 @@ public class ImFriendShipController {
      * @return {@link ResponseVO}
      */
     @RequestMapping("/checkFriend")
-    public ResponseVO checkFriend(@RequestBody @Validated CheckFriendShipReq req, Integer appId){
+    public ResponseVO checkFriend(@RequestBody @Validated CheckFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return imFriendShipService.checkFriendship(req);
     }
 
+
+    /**
+     * 拉黑
+     *
+     * @param req   亲求参数
+     * @param appId 应用程序id
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/addBlack")
+    public ResponseVO addBlack(@RequestBody @Validated AddFriendShipBlackReq req, Integer appId) {
+        req.setAppId(appId);
+        return imFriendShipService.addBlack(req);
+    }
+
+    /**
+     * 取消拉黑
+     *
+     * @param req   亲求参数
+     * @param appId 应用程序id
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/deleteBlack")
+    public ResponseVO deleteBlack(@RequestBody @Validated DeleteBlackReq req, Integer appId) {
+        req.setAppId(appId);
+        return imFriendShipService.deleteBlack(req);
+    }
+
+    /**
+     * 是否拉黑检查
+     *
+     * @param req   亲求参数
+     * @param appId 应用程序id
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/checkBlack")
+    public ResponseVO checkBlack(@RequestBody @Validated CheckFriendShipReq req, Integer appId) {
+        req.setAppId(appId);
+        return imFriendShipService.checkBlack(req);
+    }
 
 
 }

@@ -90,4 +90,29 @@ public interface ImFriendService {
     ResponseVO checkFriendship(CheckFriendShipReq req);
 
 
+    /**
+     * 拉黑
+     *
+     * @param req 亲求
+     * @return {@link ResponseVO}
+     */
+    ResponseVO addBlack(AddFriendShipBlackReq req);
+
+    /**
+     * 取消拉黑
+     *
+     * @param req 亲求
+     * @return {@link ResponseVO}
+     */
+    ResponseVO deleteBlack(DeleteBlackReq req);
+
+
+    /**
+     * 是否拉黑
+     *
+     * @param req 要求事情
+     * @return {@link ResponseVO}
+     */
+    ResponseVO checkBlack(CheckFriendShipReq req);
+
 }
