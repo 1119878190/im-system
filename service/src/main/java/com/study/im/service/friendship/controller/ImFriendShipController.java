@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 好友关系controller
+ *
+ * @author lx
+ * @date 2023/04/29
+ */
 @RestController
 @RequestMapping("v1/friendship")
 public class ImFriendShipController {

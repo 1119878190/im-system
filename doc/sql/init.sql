@@ -39,3 +39,25 @@ CREATE TABLE `im_friendship`  (
                                   `extra` varchar(1000) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '来源',
                                   PRIMARY KEY (`app_id`, `from_id`, `to_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+
+
+
+-- ----------------------------
+-- Table structure for im_friendship_request  好友请求
+-- ----------------------------
+DROP TABLE IF EXISTS `im_friendship_request`;
+CREATE TABLE `im_friendship_request`  (
+                                          `id` int(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+                                          `app_id` int(20) NULL DEFAULT NULL COMMENT 'app_id',
+                                          `from_id` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'from_id',
+                                          `to_id` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'to_id',
+                                          `remark` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '备注',
+                                          `read_status` int(10) NULL DEFAULT NULL COMMENT '是否已读 1已读',
+                                          `add_source` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '好友来源',
+                                          `add_wording` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '好友验证信息',
+                                          `approve_status` int(10) NULL DEFAULT NULL COMMENT '审批状态 1同意 2拒绝',
+                                          `create_time` bigint(20) NULL DEFAULT NULL,
+                                          `update_time` bigint(20) NULL DEFAULT NULL,
+                                          `sequence` bigint(20) NULL DEFAULT NULL,
+                                          PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;

@@ -16,6 +16,7 @@ import com.study.im.service.friendship.model.req.*;
 import com.study.im.service.friendship.model.resp.CheckFriendShipResp;
 import com.study.im.service.friendship.model.resp.ImportFriendShipResp;
 import com.study.im.service.friendship.service.ImFriendService;
+import com.study.im.service.friendship.service.ImFriendShipRequestService;
 import com.study.im.service.user.dao.ImUserDataEntity;
 import com.study.im.service.user.service.ImUserService;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +47,9 @@ public class ImFriendServiceImpl implements ImFriendService {
 
     @Autowired
     ImFriendService imFriendService;
+
+    @Autowired
+    ImFriendShipRequestService imFriendShipRequestService;
 
     @Override
     public ResponseVO importFriendShip(ImportFriendShipReq req) {
@@ -102,22 +106,22 @@ public class ImFriendServiceImpl implements ImFriendService {
         if (data.getFriendAllowType() != null && data.getFriendAllowType() == AllowFriendTypeEnum.NOT_NEED.getCode()) {
             return this.doAddFriend(req, req.getFromId(), req.getToItem(), req.getAppId());
         } else {
-            // TODO: 2023/4/29 发送好友申请
-//            QueryWrapper<ImFriendShipEntity> query = new QueryWrapper<>();
-//            query.eq("app_id", req.getAppId());
-//            query.eq("from_id", req.getFromId());
-//            query.eq("to_id", req.getToItem().getToId());
-//            ImFriendShipEntity fromItem = imFriendShipMapper.selectOne(query);
-//            if (fromItem == null || fromItem.getStatus()
-//                    != FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
-//                //插入一条好友申请的数据
-//                ResponseVO responseVO = imFriendShipRequestService.addFienshipRequest(req.getFromId(), req.getToItem(), req.getAppId());
-//                if (!responseVO.isOk()) {
-//                    return responseVO;
-//                }
-//            } else {
-//                return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
-//            }
+            // 发送好友申请
+            QueryWrapper<ImFriendShipEntity> query = new QueryWrapper<>();
+            query.eq("app_id", req.getAppId());
+            query.eq("from_id", req.getFromId());
+            query.eq("to_id", req.getToItem().getToId());
+            ImFriendShipEntity fromItem = imFriendShipMapper.selectOne(query);
+            if (fromItem == null || fromItem.getStatus()
+                    != FriendShipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
+                //插入一条好友申请的数据
+                ResponseVO responseVO = imFriendShipRequestService.addFriendshipRequest(req.getFromId(), req.getToItem(), req.getAppId());
+                if (!responseVO.isOk()) {
+                    return responseVO;
+                }
+            } else {
+                return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
+            }
 
         }
 
