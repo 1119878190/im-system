@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.study.im</groupId>
-    <artifactId>common</artifactId>
+    <artifactId>im-common</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
