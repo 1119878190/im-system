@@ -2,13 +2,13 @@ package com.study.im.tcp;
 
 
 import com.study.im.codec.config.BootstrapConfig;
+import com.study.im.tcp.redis.RedisManager;
 import com.study.im.tcp.server.LimServer;
 import com.study.im.tcp.server.LimWebsocketServer;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 
 /**
  * 起动器
@@ -24,13 +24,17 @@ public class Starter {
     }
 
 
-    public static void start(String path){
+    public static void start(String path) {
         Yaml yaml = new Yaml();
         try {
             FileInputStream inputStream = new FileInputStream(path);
             BootstrapConfig bootstrapConfig = yaml.loadAs(inputStream, BootstrapConfig.class);
+
             new LimServer(bootstrapConfig.getLim()).start();
             new LimWebsocketServer(bootstrapConfig.getLim()).start();
+
+            RedisManager.init(bootstrapConfig);
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
