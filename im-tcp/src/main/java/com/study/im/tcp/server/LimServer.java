@@ -1,6 +1,8 @@
 package com.study.im.tcp.server;
 
 import com.study.im.codec.config.BootstrapConfig;
+import com.study.im.codec.config.MessageDecoder;
+import com.study.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -44,16 +46,18 @@ public class LimServer {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
 
                     @Override
-                    protected void initChannel(SocketChannel socketChannel) throws Exception {
-
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new MessageDecoder());
+                        ch.pipeline().addLast(new NettyServerHandler());
                     }
                 });
 
-
+        logger.info("LimServer 启动成功port:[{}]", tcpConfig.getTcpPort());
     }
 
     public void start() {
-        this.serverBootstrap.bind(tcpConfig.getWebSocketPort());
+        this.serverBootstrap.bind(tcpConfig.getTcpPort());
+
     }
 
 }

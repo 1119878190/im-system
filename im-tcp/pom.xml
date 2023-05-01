@@ -43,12 +43,6 @@
             <artifactId>hibernate-validator</artifactId>
         </dependency>
 
-        <!-- netty -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-        </dependency>
-
         <!-- yaml解析 -->
         <dependency>
             <groupId>org.yaml</groupId>
