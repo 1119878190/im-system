@@ -1,4 +1,4 @@
-package com.study.im.codec.config.proto;
+package com.study.im.codec.proto;
 
 import lombok.Data;
 

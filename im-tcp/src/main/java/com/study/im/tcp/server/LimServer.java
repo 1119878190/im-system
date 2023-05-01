@@ -1,7 +1,7 @@
 package com.study.im.tcp.server;
 
 import com.study.im.codec.config.BootstrapConfig;
-import com.study.im.codec.config.MessageDecoder;
+import com.study.im.codec.MessageDecoder;
 import com.study.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;

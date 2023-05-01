@@ -1,9 +1,9 @@
-package com.study.im.codec.config.utils;
+package com.study.im.codec.utils;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.study.im.codec.config.proto.Message;
-import com.study.im.codec.config.proto.MessageHeader;
+import com.study.im.codec.proto.Message;
+import com.study.im.codec.proto.MessageHeader;
 import io.netty.buffer.ByteBuf;
 
 /**
