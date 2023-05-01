@@ -1,5 +1,11 @@
 package com.study.im.common.enums.command;
 
+/**
+ * 消息系统命令
+ *
+ * @author lx
+ * @date 2023/05/01
+ */
 public enum SystemCommand implements Command {
 
 
@@ -7,6 +13,13 @@ public enum SystemCommand implements Command {
      * 登录 9000
      */
     LOGIN(0x2328),
+
+
+    /**
+     * 登出  9003
+     */
+    LOGOUT(0x232b),
+
 
     ;
 
