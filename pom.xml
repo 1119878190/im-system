@@ -12,6 +12,8 @@
     <modules>
         <module>im-common</module>
         <module>im-service</module>
+        <module>im-tcp</module>
+        <module>im-codec</module>
     </modules>
 
     <properties>
@@ -121,6 +123,13 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
             </dependency>
         </dependencies>
 
