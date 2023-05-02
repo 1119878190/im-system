@@ -2,9 +2,11 @@ package com.study.im.tcp;
 
 
 import com.study.im.codec.config.BootstrapConfig;
+import com.study.im.tcp.receiver.MqMessageReceiver;
 import com.study.im.tcp.redis.RedisManager;
 import com.study.im.tcp.server.LimServer;
 import com.study.im.tcp.server.LimWebsocketServer;
+import com.study.im.tcp.utils.MqFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -34,6 +36,8 @@ public class Starter {
             new LimWebsocketServer(bootstrapConfig.getLim()).start();
 
             RedisManager.init(bootstrapConfig);
+            MqFactory.init(bootstrapConfig.getLim().getRabbitmq());
+            MqMessageReceiver.init();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

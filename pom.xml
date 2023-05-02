@@ -139,6 +139,18 @@
                 <version>${redisson.version}</version>
             </dependency>
 
+            <!-- rabbitmq -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-amqp</artifactId>
+                <version>${springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>${rabbit.client.version}</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>

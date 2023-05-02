@@ -56,6 +56,13 @@
             <version>${redisson.version}</version>
         </dependency>
 
+        <!-- rabbitmq -->
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+        </dependency>
+
+
     </dependencies>
 
     <build>
