@@ -60,20 +60,13 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
                     (NioSocketChannel) ctx.channel());
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) {
+            // 用户退出
+            SessionSocketHolder.removeUserSession((NioSocketChannel) ctx.channel());
 
-            // 退出
-            String userId = (String) ctx.channel().attr(AttributeKey.valueOf(Constants.UserId)).get();
-            Integer appId = (Integer) ctx.channel().attr(AttributeKey.valueOf(Constants.AppId)).get();
-            Integer clientType = (Integer) ctx.channel().attr(AttributeKey.valueOf(Constants.ClientType)).get();
-
-            // 删除 session
-            SessionSocketHolder.remove(appId, userId, clientType);
-
-            // 删除 redis 用户信息
-            RedissonClient redissonClient = RedisManager.getRedissonClient();
-            RMap<Object, Object> map = redissonClient.getMap(appId + Constants.RedisConstants.USER_SESSION_CONSTANT + userId);
-            map.remove(clientType);
-            ctx.channel().close();
+        } else if (command == SystemCommand.PING.getCommand()) {
+            // 心跳检测事件
+            // 设置读写时间时间
+            ctx.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
 
         }
     }

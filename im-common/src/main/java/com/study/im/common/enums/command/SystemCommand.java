@@ -10,6 +10,12 @@ public enum SystemCommand implements Command {
 
 
     /**
+     * 心跳 9999
+     */
+    PING(0x270f),
+
+
+    /**
      * 登录 9000
      */
     LOGIN(0x2328),

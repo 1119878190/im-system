@@ -1,7 +1,8 @@
 package com.study.im.tcp.server;
 
-import com.study.im.codec.config.BootstrapConfig;
 import com.study.im.codec.MessageDecoder;
+import com.study.im.codec.config.BootstrapConfig;
+import com.study.im.tcp.handler.HeartBeatHandler;
 import com.study.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -10,6 +11,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +30,10 @@ public class LimServer {
     ServerBootstrap serverBootstrap;
     BootstrapConfig.TcpConfig tcpConfig;
 
-    public LimServer(BootstrapConfig.TcpConfig tcpConfig) {
-        this.tcpConfig = tcpConfig;
-        mainGroup = new NioEventLoopGroup(tcpConfig.getBossThreadSize());
-        subGroup = new NioEventLoopGroup(tcpConfig.getWorkThreadSize());
+    public LimServer(BootstrapConfig.TcpConfig config) {
+        this.tcpConfig = config;
+        mainGroup = new NioEventLoopGroup(config.getBossThreadSize());
+        subGroup = new NioEventLoopGroup(config.getWorkThreadSize());
         serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(mainGroup, subGroup)
                 .channel(NioServerSocketChannel.class)
@@ -48,11 +50,15 @@ public class LimServer {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new MessageDecoder());
+
+                        // 心跳检测，会触发下一个 handler 的 userEventTriggered 方法
+                        ch.pipeline().addLast(new IdleStateHandler(0,0,10));
+                        ch.pipeline().addLast(new HeartBeatHandler(config.getHeartBeatTime()));
                         ch.pipeline().addLast(new NettyServerHandler());
                     }
                 });
 
-        logger.info("LimServer 启动成功port:[{}]", tcpConfig.getTcpPort());
+        logger.info("LimServer 启动成功port:[{}]", config.getTcpPort());
     }
 
     public void start() {

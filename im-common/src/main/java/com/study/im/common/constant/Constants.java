@@ -19,6 +19,11 @@ public class Constants {
 
     public static final String ClientType = "clientType";
 
+    /** 上次 channel 的读时间*/
+    public static final String ReadTime = "readTime";
+
+
+
 
     public static class RedisConstants {
 
