@@ -62,6 +62,12 @@
             <artifactId>amqp-client</artifactId>
         </dependency>
 
+        <!--  zkClient -->
+        <dependency>
+            <groupId>com.github.sgroschupf</groupId>
+            <artifactId>zkclient</artifactId>
+        </dependency>
+
 
     </dependencies>
 

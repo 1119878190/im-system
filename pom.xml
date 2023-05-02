@@ -151,6 +151,13 @@
                 <version>${rabbit.client.version}</version>
             </dependency>
 
+            <!--  zkClient -->
+            <dependency>
+                <groupId>com.github.sgroschupf</groupId>
+                <artifactId>zkclient</artifactId>
+                <version>${zkClient.version}</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>

@@ -1,6 +1,6 @@
 lim:
-  tcpPort: 9000
-  webSocketPort: 19000
+  tcpPort: 9001
+  webSocketPort: 19001
   bossThreadSize: 1
   workThreadSize: 8
   heartBeatTime: 3000 #心跳超时事件，单位毫秒
