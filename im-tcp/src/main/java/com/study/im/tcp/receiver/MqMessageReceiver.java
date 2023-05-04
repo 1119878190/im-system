@@ -9,6 +9,7 @@ import com.study.im.tcp.utils.MqFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * mq消息接收器
@@ -19,17 +20,19 @@ import java.io.IOException;
 @Slf4j
 public class MqMessageReceiver {
 
+    private static Integer brokerId;
+
     private static void startReceiveMessage() {
         try {
-            Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im);
-            channel.queueDeclare(Constants.RabbitConstants.MessageService2Im,
+            Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im + brokerId);
+            // Declare a queue
+            channel.queueDeclare(Constants.RabbitConstants.MessageService2Im + brokerId,
                     true, false, false, null);
             //  Bind a queue to an exchange
-            channel.queueBind(Constants.RabbitConstants.MessageService2Im,
-                    Constants.RabbitConstants.MessageService2Im,
-                    "");
+            channel.queueBind(Constants.RabbitConstants.MessageService2Im + brokerId,
+                    Constants.RabbitConstants.MessageService2Im, String.valueOf(brokerId));
             // queue consumer
-            channel.basicConsume(Constants.RabbitConstants.MessageService2Im, false, new DefaultConsumer(channel) {
+            channel.basicConsume(Constants.RabbitConstants.MessageService2Im + brokerId, false, new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
 
@@ -49,4 +52,11 @@ public class MqMessageReceiver {
         startReceiveMessage();
     }
 
+
+    public static void init(Integer brokerId){
+        if (Objects.isNull(MqMessageReceiver.brokerId)){
+            MqMessageReceiver.brokerId = brokerId;
+        }
+        startReceiveMessage();
+    }
 }

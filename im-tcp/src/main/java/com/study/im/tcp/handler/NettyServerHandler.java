@@ -19,6 +19,8 @@ import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+
 /**
  * 业务处理handler
  *
@@ -28,6 +30,13 @@ import org.slf4j.LoggerFactory;
 public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
+
+    private Integer brokerId;
+
+    public NettyServerHandler(Integer brokerId) {
+        this.brokerId = brokerId;
+    }
+
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
@@ -48,6 +57,11 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setAppId(msg.getMessageHeader().getAppId());
             userSession.setClientType(msg.getMessageHeader().getClientType());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
+
+            userSession.setBrokerId(brokerId);
+            String hostAddress = InetAddress.getLocalHost().getHostAddress();
+            userSession.setBrokerHost(hostAddress);
+
 
             RedissonClient redissonClient = RedisManager.getRedissonClient();
             RMap<String, String> map = redissonClient.getMap(msg.getMessageHeader().getAppId() + Constants.RedisConstants.USER_SESSION_CONSTANT + loginPack.getUserId());

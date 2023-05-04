@@ -56,6 +56,11 @@ public class BootstrapConfig {
          * zk配置
          */
         private ZkConfig zkConfig;
+
+        /**
+         * brokerId  服务的唯一标识，用户部署多个netty服务时的区分
+         */
+        private Integer brokerId;
     }
 
 

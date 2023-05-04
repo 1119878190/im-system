@@ -46,7 +46,7 @@ public class Starter {
             RedisManager.init(bootstrapConfig);
             // mq
             MqFactory.init(bootstrapConfig.getLim().getRabbitmq());
-            MqMessageReceiver.init();
+            MqMessageReceiver.init(bootstrapConfig.getLim().getBrokerId());
             // zk
             registerZK(bootstrapConfig);
 
