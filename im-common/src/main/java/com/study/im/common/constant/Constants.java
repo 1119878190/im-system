@@ -19,6 +19,8 @@ public class Constants {
 
     public static final String ClientType = "clientType";
 
+    public static final String Imei = "imei";
+
     /** 上次 channel 的读时间*/
     public static final String ReadTime = "readTime";
 
@@ -33,7 +35,15 @@ public class Constants {
 
     public static class RedisConstants {
 
-        // 用户Session    格式： appid + USER_SESSION_CONSTANT + 用户id
+        /**
+         * 用户上线通知channel
+         */
+        public static final String UserLoginChannel = "signal/channel/LOGIN_USER_INNER_QUEUE";
+
+
+        /**
+         * 用户session，appId + UserSessionConstants + 用户id 例如10000：userSession：lld
+         */
         public static final String USER_SESSION_CONSTANT = ":userSession:";
 
     }

@@ -7,6 +7,7 @@ import com.study.im.codec.proto.Message;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.ImConnectStatusEnum;
 import com.study.im.common.enums.command.SystemCommand;
+import com.study.im.common.model.UserClientDto;
 import com.study.im.common.model.UserSession;
 import com.study.im.tcp.redis.RedisManager;
 import com.study.im.tcp.utils.SessionSocketHolder;
@@ -15,6 +16,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
 import org.redisson.api.RMap;
+import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             ctx.channel().attr(AttributeKey.valueOf(Constants.UserId)).set(loginPack.getUserId());
             ctx.channel().attr(AttributeKey.valueOf(Constants.AppId)).set(msg.getMessageHeader().getAppId());
             ctx.channel().attr(AttributeKey.valueOf(Constants.ClientType)).set(msg.getMessageHeader().getClientType());
+            ctx.channel().attr(AttributeKey.valueOf(Constants.Imei)).set(msg.getMessageHeader().getImei());
 
             // 将用户信息存储到 redis map 中
             UserSession userSession = new UserSession();
@@ -63,15 +66,27 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setBrokerHost(hostAddress);
 
 
+            // appId:userSession:usrId    clientType:imei   usrSession
             RedissonClient redissonClient = RedisManager.getRedissonClient();
             RMap<String, String> map = redissonClient.getMap(msg.getMessageHeader().getAppId() + Constants.RedisConstants.USER_SESSION_CONSTANT + loginPack.getUserId());
-            map.put(String.valueOf(msg.getMessageHeader().getClientType()), JSONObject.toJSONString(userSession));
+            map.put(String.valueOf(msg.getMessageHeader().getClientType()) + ":" + msg.getMessageHeader().getImei(),
+                    JSONObject.toJSONString(userSession));
 
             // 将 channel 存起来
             SessionSocketHolder.put(msg.getMessageHeader().getAppId(),
                     loginPack.getUserId(),
                     msg.getMessageHeader().getClientType(),
+                    msg.getMessageHeader().getImei(),
                     (NioSocketChannel) ctx.channel());
+
+            // 多端登录，通过redis的发布订阅，通知其它服务上的端进行退出
+            UserClientDto userClientDto = new UserClientDto();
+            userClientDto.setImei(msg.getMessageHeader().getImei());
+            userClientDto.setUserId(loginPack.getUserId());
+            userClientDto.setClientType(msg.getMessageHeader().getClientType());
+            userClientDto.setAppId(msg.getMessageHeader().getAppId());
+            RTopic topic = redissonClient.getTopic(Constants.RedisConstants.UserLoginChannel);
+            topic.publish(JSONObject.toJSONString(userClientDto));
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) {
             // 用户退出

@@ -61,6 +61,9 @@ public class BootstrapConfig {
          * brokerId  服务的唯一标识，用户部署多个netty服务时的区分
          */
         private Integer brokerId;
+
+
+        private Integer loginModel;
     }
 
 
