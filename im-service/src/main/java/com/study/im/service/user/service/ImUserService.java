@@ -3,10 +3,7 @@ package com.study.im.service.user.service;
 
 import com.study.im.common.ResponseVO;
 import com.study.im.service.user.dao.ImUserDataEntity;
-import com.study.im.service.user.model.req.DeleteUserReq;
-import com.study.im.service.user.model.req.GetUserInfoReq;
-import com.study.im.service.user.model.req.ImportUserReq;
-import com.study.im.service.user.model.req.ModifyUserInfoReq;
+import com.study.im.service.user.model.req.*;
 import com.study.im.service.user.model.resp.GetUserInfoResp;
 
 /**
@@ -26,5 +23,7 @@ public interface ImUserService {
 
     public ResponseVO modifyUserInfo(ModifyUserInfoReq req);
 
+
+    ResponseVO login(LoginReq req);
 
 }

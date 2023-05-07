@@ -1,18 +1,13 @@
 package com.study.im.service.user.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-
 import com.study.im.common.ResponseVO;
 import com.study.im.common.enums.DelFlagEnum;
 import com.study.im.common.enums.UserErrorCode;
 import com.study.im.common.exception.ApplicationException;
 import com.study.im.service.user.dao.ImUserDataEntity;
 import com.study.im.service.user.dao.mapper.ImUserDataMapper;
-import com.study.im.service.user.model.req.DeleteUserReq;
-import com.study.im.service.user.model.req.GetUserInfoReq;
-import com.study.im.service.user.model.req.ImportUserReq;
-import com.study.im.service.user.model.req.ModifyUserInfoReq;
+import com.study.im.service.user.model.req.*;
 import com.study.im.service.user.model.resp.GetUserInfoResp;
 import com.study.im.service.user.model.resp.ImportUserResp;
 import com.study.im.service.user.service.ImUserService;
@@ -24,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @description:
@@ -170,4 +164,9 @@ public class ImUserviceImpl implements ImUserService {
         throw new ApplicationException(UserErrorCode.MODIFY_USER_ERROR);
     }
 
+
+    @Override
+    public ResponseVO login(LoginReq req) {
+        return ResponseVO.successResponse();
+    }
 }

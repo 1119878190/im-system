@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author lx
  * @date 2023/04/29
  */
-@SpringBootApplication(scanBasePackages = {"com.study.im.service"})
+@SpringBootApplication(scanBasePackages = {"com.study.im.service","com.study.im.common"})
 public class IMApplication {
 
     public static void main(String[] args) {
