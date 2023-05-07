@@ -3,7 +3,8 @@ package com.study.im.service.config;
 
 import com.study.im.common.config.AppConfig;
 import com.study.im.common.route.RouteHandle;
-import com.study.im.common.route.algorithm.loop.LoopHandle;
+import com.study.im.common.route.algorithm.consistenthash.ConsistentHashHandle;
+import com.study.im.common.route.algorithm.consistenthash.TreeMapConsistentHash;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +25,12 @@ public class BeanConfig {
 
     @Bean
     public RouteHandle routeHandle() {
-        return new LoopHandle();
+
+        ConsistentHashHandle consistentHashHandle = new ConsistentHashHandle();
+        TreeMapConsistentHash treeMapConsistentHash = new TreeMapConsistentHash();
+        consistentHashHandle.setHash(treeMapConsistentHash);
+
+        return consistentHashHandle;
     }
 
     @Bean

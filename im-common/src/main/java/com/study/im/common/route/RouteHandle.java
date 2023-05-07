@@ -14,10 +14,10 @@ public interface RouteHandle {
      /**
       * sdk 路由策略
       *
-      * @param values 所有zk节点
+      * @param nodes 所有zk节点
       * @param key    键
       * @return {@link String}
       */
-     String routeServer(List<String> values,String key);
+     String routeServer(List<String> nodes,String key);
 
 }
