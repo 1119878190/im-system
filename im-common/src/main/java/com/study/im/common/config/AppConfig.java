@@ -26,5 +26,15 @@ public class AppConfig {
      */
     private Integer zkConnectTimeOut;
 
+    /**
+     * im路由策略
+     */
+    private Integer imRouteWay;
+
+    /**
+     * 一致性哈希算法
+     */
+    private Integer consistentHashWay;
+
 
 }
