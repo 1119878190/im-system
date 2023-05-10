@@ -158,6 +158,13 @@
                 <version>${zkClient.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${apache.httpclient.version}</version>
+            </dependency>
+
+
         </dependencies>
 
     </dependencyManagement>

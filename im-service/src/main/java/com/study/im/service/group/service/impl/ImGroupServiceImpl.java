@@ -1,10 +1,12 @@
 package com.study.im.service.group.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-
 import com.study.im.common.ResponseVO;
+import com.study.im.common.config.AppConfig;
+import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.GroupErrorCode;
 import com.study.im.common.enums.GroupMemberRoleEnum;
 import com.study.im.common.enums.GroupStatusEnum;
@@ -12,12 +14,14 @@ import com.study.im.common.enums.GroupTypeEnum;
 import com.study.im.common.exception.ApplicationException;
 import com.study.im.service.group.dao.ImGroupEntity;
 import com.study.im.service.group.dao.mapper.ImGroupMapper;
+import com.study.im.service.group.model.callback.DestroyGroupCallbackDto;
 import com.study.im.service.group.model.req.*;
 import com.study.im.service.group.model.resp.GetGroupResp;
 import com.study.im.service.group.model.resp.GetJoinedGroupResp;
 import com.study.im.service.group.model.resp.GetRoleInGroupResp;
 import com.study.im.service.group.service.ImGroupMemberService;
 import com.study.im.service.group.service.ImGroupService;
+import com.study.im.service.utils.CallbackService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +46,12 @@ public class ImGroupServiceImpl implements ImGroupService {
 
     @Autowired
     ImGroupMemberService groupMemberService;
+
+    @Autowired
+    private AppConfig appConfig;
+
+    @Autowired
+    private CallbackService callbackService;
 
 
     @Override
@@ -126,6 +136,13 @@ public class ImGroupServiceImpl implements ImGroupService {
             groupMemberService.addGroupMember(req.getGroupId(), req.getAppId(), dto);
         }
 
+        // 之后回调
+        if(appConfig.isCreateGroupAfterCallback()){
+            callbackService.callback(req.getAppId(), Constants.CallbackCommand.CreateGroupAfter,
+                    JSONObject.toJSONString(imGroupEntity));
+        }
+
+
         return ResponseVO.successResponse();
     }
 
@@ -149,7 +166,7 @@ public class ImGroupServiceImpl implements ImGroupService {
             throw new ApplicationException(GroupErrorCode.GROUP_IS_EXIST);
         }
 
-        if(imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()){
+        if (imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()) {
             throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
         }
 
@@ -181,6 +198,12 @@ public class ImGroupServiceImpl implements ImGroupService {
         int row = imGroupDataMapper.update(update, query);
         if (row != 1) {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+        }
+
+        // 之后回调
+        if(appConfig.isModifyGroupAfterCallback()){
+            callbackService.callback(req.getAppId(),Constants.CallbackCommand.UpdateGroupAfter,
+                    JSONObject.toJSONString(imGroupDataMapper.selectOne(query)));
         }
 
         return ResponseVO.successResponse();
@@ -248,7 +271,7 @@ public class ImGroupServiceImpl implements ImGroupService {
             throw new ApplicationException(GroupErrorCode.PRIVATE_GROUP_CAN_NOT_DESTORY);
         }
 
-        if(imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()){
+        if (imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()) {
             throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
         }
 
@@ -270,6 +293,16 @@ public class ImGroupServiceImpl implements ImGroupService {
         if (update1 != 1) {
             throw new ApplicationException(GroupErrorCode.UPDATE_GROUP_BASE_INFO_ERROR);
         }
+
+        // 之后回调
+        if(appConfig.isModifyGroupAfterCallback()){
+            DestroyGroupCallbackDto dto = new DestroyGroupCallbackDto();
+            dto.setGroupId(req.getGroupId());
+            callbackService.callback(req.getAppId()
+                    ,Constants.CallbackCommand.DestoryGroupAfter,
+                    JSONObject.toJSONString(dto));
+        }
+
         return ResponseVO.successResponse();
     }
 
@@ -295,7 +328,7 @@ public class ImGroupServiceImpl implements ImGroupService {
         objectQueryWrapper.eq("group_id", req.getGroupId());
         objectQueryWrapper.eq("app_id", req.getAppId());
         ImGroupEntity imGroupEntity = imGroupDataMapper.selectOne(objectQueryWrapper);
-        if(imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()){
+        if (imGroupEntity.getStatus() == GroupStatusEnum.DESTROY.getCode()) {
             throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
         }
 
@@ -329,7 +362,7 @@ public class ImGroupServiceImpl implements ImGroupService {
 
         ResponseVO group = this.getGroup(req.getGroupId(), req.getAppId());
 
-        if(!group.isOk()){
+        if (!group.isOk()) {
             return group;
         }
 
@@ -354,7 +387,7 @@ public class ImGroupServiceImpl implements ImGroupService {
             return groupResp;
         }
 
-        if(groupResp.getData().getStatus() == GroupStatusEnum.DESTROY.getCode()){
+        if (groupResp.getData().getStatus() == GroupStatusEnum.DESTROY.getCode()) {
             throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
         }
 
@@ -383,9 +416,9 @@ public class ImGroupServiceImpl implements ImGroupService {
         update.setMute(req.getMute());
 
         UpdateWrapper<ImGroupEntity> wrapper = new UpdateWrapper<>();
-        wrapper.eq("group_id",req.getGroupId());
-        wrapper.eq("app_id",req.getAppId());
-        imGroupDataMapper.update(update,wrapper);
+        wrapper.eq("group_id", req.getGroupId());
+        wrapper.eq("app_id", req.getAppId());
+        imGroupDataMapper.update(update, wrapper);
 
         return ResponseVO.successResponse();
     }

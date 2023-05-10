@@ -2,7 +2,9 @@ package com.study.im.service.user.model.req;
 
 
 import com.study.im.common.model.RequestBase;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 
@@ -12,6 +14,8 @@ import javax.validation.constraints.NotEmpty;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ModifyUserInfoReq extends RequestBase {
 
     // 用户id

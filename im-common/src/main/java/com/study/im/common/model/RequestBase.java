@@ -1,6 +1,8 @@
 package com.study.im.common.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 请求基础
@@ -10,6 +12,8 @@ import lombok.Data;
  * @date 2023/04/29
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class RequestBase {
     private Integer appId;
 
