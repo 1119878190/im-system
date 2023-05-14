@@ -113,6 +113,5 @@ public class UserLoginMessageListener {
         pack.setUserId((String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.UserId)).get());
         pack.setCommand(SystemCommand.MUTUALLOGIN.getCommand());
         nioSocketChannel.writeAndFlush(pack);
-        nioSocketChannel.writeAndFlush(pack);
     }
 }

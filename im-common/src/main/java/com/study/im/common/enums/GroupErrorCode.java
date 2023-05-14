@@ -4,7 +4,7 @@ package com.study.im.common.enums;
 import com.study.im.common.exception.ApplicationExceptionEnum;
 
 /**
- * @author: Chackylee
+ * @author: lx
  * @description:
  **/
 public enum GroupErrorCode implements ApplicationExceptionEnum {

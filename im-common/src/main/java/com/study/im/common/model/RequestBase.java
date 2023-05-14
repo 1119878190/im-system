@@ -15,11 +15,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestBase {
+
+    /**
+     * 应用程序id
+     */
     private Integer appId;
 
     private String operater;
 
+    /**
+     * 客户端类型
+     */
     private Integer clientType;
 
+    /**
+     * imei
+     */
     private String imei;
 }

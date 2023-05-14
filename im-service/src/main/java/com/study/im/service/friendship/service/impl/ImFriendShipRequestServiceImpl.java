@@ -1,10 +1,12 @@
 package com.study.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-
+import com.study.im.codec.pack.friendship.ApproverFriendRequestPack;
+import com.study.im.codec.pack.friendship.ReadAllFriendRequestPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.enums.ApproverFriendRequestStatusEnum;
 import com.study.im.common.enums.FriendShipErrorCode;
+import com.study.im.common.enums.command.FriendshipEventCommand;
 import com.study.im.common.exception.ApplicationException;
 import com.study.im.service.friendship.dao.ImFriendShipRequestEntity;
 import com.study.im.service.friendship.dao.mapper.ImFriendShipRequestMapper;
@@ -13,6 +15,7 @@ import com.study.im.service.friendship.model.req.FriendDto;
 import com.study.im.service.friendship.model.req.ReadFriendShipRequestReq;
 import com.study.im.service.friendship.service.ImFriendService;
 import com.study.im.service.friendship.service.ImFriendShipRequestService;
+import com.study.im.service.utils.MessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 
+/**
+ * 好友申请
+ *
+ * @author lx
+ * @date 2023/05/10
+ */
 @Service
 public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestService {
 
@@ -29,6 +38,9 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
 
     @Autowired
     ImFriendService imFriendShipService;
+
+    @Autowired
+    private MessageProducer messageProducer;
 
     @Override
     public ResponseVO getFriendRequest(String fromId, Integer appId) {
@@ -82,6 +94,11 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
             imFriendShipRequestMapper.updateById(request);
         }
 
+        //发送好友申请所有端发送 mq消息
+        messageProducer.sendToUser(dto.getToId(),
+                null, "", FriendshipEventCommand.FRIEND_REQUEST,
+                request, appId);
+
         return ResponseVO.successResponse();
     }
 
@@ -122,6 +139,12 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
             }
         }
 
+        ApproverFriendRequestPack approverFriendRequestPack = new ApproverFriendRequestPack();
+        approverFriendRequestPack.setId(req.getId());
+        approverFriendRequestPack.setStatus(req.getStatus());
+        messageProducer.sendToUser(imFriendShipRequestEntity.getToId(),req.getClientType(),req.getImei(), FriendshipEventCommand
+                .FRIEND_REQUEST_APPROVER,approverFriendRequestPack,req.getAppId());
+
         return ResponseVO.successResponse();
     }
 
@@ -134,6 +157,13 @@ public class ImFriendShipRequestServiceImpl implements ImFriendShipRequestServic
         ImFriendShipRequestEntity update = new ImFriendShipRequestEntity();
         update.setReadStatus(1);
         imFriendShipRequestMapper.update(update, query);
+
+
+        // mq 通过其它端
+        ReadAllFriendRequestPack readAllFriendRequestPack = new ReadAllFriendRequestPack();
+        readAllFriendRequestPack.setFromId(req.getFromId());
+        messageProducer.sendToUser(req.getFromId(),req.getClientType(),req.getImei(),FriendshipEventCommand
+                .FRIEND_REQUEST_READ,readAllFriendRequestPack,req.getAppId());
 
         return ResponseVO.successResponse();
     }

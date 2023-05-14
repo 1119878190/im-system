@@ -1,7 +1,7 @@
 package com.study.im.common;
 
 /**
- * @author: Chackylee
+ * @author: lx
  * @description:
  **/
 public enum ClientType {

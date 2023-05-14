@@ -5,7 +5,7 @@ import com.study.im.service.group.dao.ImGroupEntity;
 import com.study.im.service.group.model.req.*;
 
 /**
- * @description:
+ * @description:  群组
  * @author: lx
  * @version: 1.0
  */

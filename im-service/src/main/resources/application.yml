@@ -6,7 +6,22 @@ spring:
     password: 123456
     url: jdbc:mysql://127.0.0.1:3306/im-core?serverTimezone=UTC&useSSL=false&characterEncoding=UTF8
     username: root
-
+  redis:
+    host: 192.168.218.129
+    port: 6379
+    jedis:
+      pool:
+        max-active: 100
+        max-idle: 100
+        max-wait: 1000
+        min-idle: 10
+    password:
+  rabbitmq:
+      host: 192.168.218.129
+      port: 5672
+      addresses: 192.168.218.129
+      username: guest
+      password: guest
   application:
     name: im-core
 
@@ -20,7 +35,7 @@ server:
 appConfig:
   zkAddr: 192.168.218.129:2181 #zk连接地址
   zkConnectTimeOut: 5000      # zk超时时间
-  imRouteWay: 3 # 路由策略 1随机 2轮询 3hash
+  imRouteWay: 2 # 路由策略 1随机 2轮询 3hash
   consistentHashWay: 1 # 如果选用一致性hash的话具体hash算法 1 TreeMap 2 自定义Map
   callBackUrl: http://127.0.0.1:8989/callback
   modifyUserAfterCallback: true # 用户资料变更之后回调开关

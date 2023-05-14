@@ -60,8 +60,9 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userSession.setAppId(msg.getMessageHeader().getAppId());
             userSession.setClientType(msg.getMessageHeader().getClientType());
             userSession.setConnectState(ImConnectStatusEnum.ONLINE_STATUS.getCode());
-
             userSession.setBrokerId(brokerId);
+            userSession.setImei(msg.getMessageHeader().getImei());
+
             String hostAddress = InetAddress.getLocalHost().getHostAddress();
             userSession.setBrokerHost(hostAddress);
 
@@ -98,5 +99,10 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             ctx.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
 
         }
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("channel active");
     }
 }

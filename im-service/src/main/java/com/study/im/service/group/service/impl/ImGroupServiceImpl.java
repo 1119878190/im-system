@@ -4,6 +4,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.study.im.codec.pack.group.CreateGroupPack;
+import com.study.im.codec.pack.group.DestroyGroupPack;
+import com.study.im.codec.pack.group.UpdateGroupInfoPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.config.AppConfig;
 import com.study.im.common.constant.Constants;
@@ -11,7 +14,9 @@ import com.study.im.common.enums.GroupErrorCode;
 import com.study.im.common.enums.GroupMemberRoleEnum;
 import com.study.im.common.enums.GroupStatusEnum;
 import com.study.im.common.enums.GroupTypeEnum;
+import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.exception.ApplicationException;
+import com.study.im.common.model.ClientInfo;
 import com.study.im.service.group.dao.ImGroupEntity;
 import com.study.im.service.group.dao.mapper.ImGroupMapper;
 import com.study.im.service.group.model.callback.DestroyGroupCallbackDto;
@@ -22,6 +27,7 @@ import com.study.im.service.group.model.resp.GetRoleInGroupResp;
 import com.study.im.service.group.service.ImGroupMemberService;
 import com.study.im.service.group.service.ImGroupService;
 import com.study.im.service.utils.CallbackService;
+import com.study.im.service.utils.GroupMessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * @description:
+ * @description: 群组
  * @author: lx
  * @version: 1.0
  */
@@ -52,6 +58,9 @@ public class ImGroupServiceImpl implements ImGroupService {
 
     @Autowired
     private CallbackService callbackService;
+
+    @Autowired
+    private GroupMessageProducer groupMessageProducer;
 
 
     @Override
@@ -143,6 +152,12 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
 
+        // 发送 mq 消息
+        CreateGroupPack createGroupPack = new CreateGroupPack();
+        BeanUtils.copyProperties(imGroupEntity, createGroupPack);
+        groupMessageProducer.producer(req.getOperater(), GroupEventCommand.CREATED_GROUP, createGroupPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
         return ResponseVO.successResponse();
     }
 
@@ -151,7 +166,7 @@ public class ImGroupServiceImpl implements ImGroupService {
      * @return com.lx.im.common.ResponseVO
      * @description 修改群基础信息，如果是后台管理员调用，则不检查权限，如果不是则检查权限，如果是私有群（微信群）任何人都可以修改资料，公开群只有管理员可以修改
      * 如果是群主或者管理员可以修改其他信息。
-     * @author chackylee
+     * @author lx
      */
     @Override
     @Transactional
@@ -206,6 +221,11 @@ public class ImGroupServiceImpl implements ImGroupService {
                     JSONObject.toJSONString(imGroupDataMapper.selectOne(query)));
         }
 
+        UpdateGroupInfoPack pack = new UpdateGroupInfoPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(req.getOperater(), GroupEventCommand.UPDATED_GROUP,
+                pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
         return ResponseVO.successResponse();
     }
 
@@ -213,7 +233,7 @@ public class ImGroupServiceImpl implements ImGroupService {
      * @param req
      * @return com.lx.im.common.ResponseVO
      * @description 获取用户加入的群组
-     * @author chackylee
+     * @author lx
      */
     @Override
     public ResponseVO getJoinedGroup(GetJoinedGroupReq req) {
@@ -255,7 +275,7 @@ public class ImGroupServiceImpl implements ImGroupService {
      * @param req
      * @return com.lx.im.common.ResponseVO
      * @description 解散群组，只支持后台管理员和群主解散
-     * @author chackylee
+     * @author lx
      */
     @Override
     @Transactional
@@ -302,6 +322,12 @@ public class ImGroupServiceImpl implements ImGroupService {
                     ,Constants.CallbackCommand.DestoryGroupAfter,
                     JSONObject.toJSONString(dto));
         }
+
+        DestroyGroupPack pack = new DestroyGroupPack();
+        pack.setGroupId(req.getGroupId());
+        groupMessageProducer.producer(req.getOperater(),
+                GroupEventCommand.DESTROY_GROUP, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
 
         return ResponseVO.successResponse();
     }

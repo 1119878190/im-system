@@ -2,11 +2,13 @@ package com.study.im.service.user.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.study.im.codec.pack.user.UserModifyPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.config.AppConfig;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.DelFlagEnum;
 import com.study.im.common.enums.UserErrorCode;
+import com.study.im.common.enums.command.UserEventCommand;
 import com.study.im.common.exception.ApplicationException;
 import com.study.im.service.user.dao.ImUserDataEntity;
 import com.study.im.service.user.dao.mapper.ImUserDataMapper;
@@ -15,6 +17,7 @@ import com.study.im.service.user.model.resp.GetUserInfoResp;
 import com.study.im.service.user.model.resp.ImportUserResp;
 import com.study.im.service.user.service.ImUserService;
 import com.study.im.service.utils.CallbackService;
+import com.study.im.service.utils.MessageProducer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,8 @@ public class ImUserviceImpl implements ImUserService {
     @Autowired
     private CallbackService callbackService;
 
+    @Autowired
+    private MessageProducer messageProducer;
 
 
     @Override
@@ -170,6 +175,13 @@ public class ImUserviceImpl implements ImUserService {
         update.setUserId(null);
         int update1 = imUserDataMapper.update(update, query);
         if (update1 == 1) {
+
+            // 发送 mq 同步数据到其它端
+            UserModifyPack userModifyPack = new UserModifyPack();
+            BeanUtils.copyProperties(req, userModifyPack);
+            messageProducer.sendToUser(req.getUserId(), req.getClientType(), req.getImei(),
+                    UserEventCommand.USER_MODIFY, userModifyPack, req.getAppId());
+
 
             // 回调
             if (appConfig.isModifyUserAfterCallback()) {

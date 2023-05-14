@@ -6,6 +6,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.study.im.codec.pack.group.AddGroupMemberPack;
+import com.study.im.codec.pack.group.GroupMemberSpeakPack;
+import com.study.im.codec.pack.group.RemoveGroupMemberPack;
+import com.study.im.codec.pack.group.UpdateGroupMemberPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.config.AppConfig;
 import com.study.im.common.constant.Constants;
@@ -13,7 +17,9 @@ import com.study.im.common.enums.GroupErrorCode;
 import com.study.im.common.enums.GroupMemberRoleEnum;
 import com.study.im.common.enums.GroupStatusEnum;
 import com.study.im.common.enums.GroupTypeEnum;
+import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.exception.ApplicationException;
+import com.study.im.common.model.ClientInfo;
 import com.study.im.service.group.dao.ImGroupEntity;
 import com.study.im.service.group.dao.ImGroupMemberEntity;
 import com.study.im.service.group.dao.mapper.ImGroupMemberMapper;
@@ -26,6 +32,7 @@ import com.study.im.service.group.service.ImGroupService;
 import com.study.im.service.user.dao.ImUserDataEntity;
 import com.study.im.service.user.service.ImUserService;
 import com.study.im.service.utils.CallbackService;
+import com.study.im.service.utils.GroupMessageProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -61,6 +68,9 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    GroupMessageProducer groupMessageProducer;
 
     @Override
     public ResponseVO importGroupMember(ImportGroupMemberReq req) {
@@ -311,6 +321,15 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             resp.add(addMemberResp);
         }
 
+
+        // 发送mq消息到tcp服务
+        AddGroupMemberPack addGroupMemberPack = new AddGroupMemberPack();
+        addGroupMemberPack.setGroupId(req.getGroupId());
+        addGroupMemberPack.setMembers(successId);
+        groupMessageProducer.producer(req.getOperater(), GroupEventCommand.ADDED_MEMBER, addGroupMemberPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
+
         // 之后回调
         if(appConfig.isAddGroupMemberAfterCallback()){
             AddMemberAfterCallback dto = new AddMemberAfterCallback();
@@ -381,8 +400,17 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             }
         }
         ResponseVO responseVO = groupMemberService.removeGroupMember(req.getGroupId(), req.getAppId(), req.getMemberId());
-        // 之后回调
+
         if(responseVO.isOk()){
+
+            // 发送 mq 消息到tcp服务
+            RemoveGroupMemberPack removeGroupMemberPack = new RemoveGroupMemberPack();
+            removeGroupMemberPack.setGroupId(req.getGroupId());
+            removeGroupMemberPack.setMember(req.getMemberId());
+            groupMessageProducer.producer(req.getMemberId(), GroupEventCommand.DELETED_MEMBER, removeGroupMemberPack
+                    , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
+            // 之后回调
             if(appConfig.isDeleteGroupMemberAfterCallback()){
                 callbackService.callback(req.getAppId(),
                         Constants.CallbackCommand.GroupMemberDeleteAfter,
@@ -488,6 +516,12 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         objectUpdateWrapper.eq("group_id", req.getGroupId());
         imGroupMemberMapper.update(update, objectUpdateWrapper);
 
+        // 发送 mq 消息到tcp服务
+        UpdateGroupMemberPack pack = new UpdateGroupMemberPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(req.getOperater(), GroupEventCommand.UPDATED_MEMBER, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
+
         return ResponseVO.successResponse();
     }
 
@@ -582,6 +616,12 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         }
 
         int i = imGroupMemberMapper.updateById(imGroupMemberEntity);
+        if(i == 1){
+            GroupMemberSpeakPack pack = new GroupMemberSpeakPack();
+            BeanUtils.copyProperties(req,pack);
+            groupMessageProducer.producer(req.getOperater(),GroupEventCommand.SPEAK_GOUP_MEMBER,pack,
+                    new ClientInfo(req.getAppId(),req.getClientType(),req.getImei()));
+        }
         return ResponseVO.successResponse();
     }
 
