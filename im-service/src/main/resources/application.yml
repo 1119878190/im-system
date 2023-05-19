@@ -33,6 +33,7 @@ server:
   port: 8000
 
 appConfig:
+  privateKey: 123456
   zkAddr: 192.168.218.129:2181 #zk连接地址
   zkConnectTimeOut: 5000      # zk超时时间
   imRouteWay: 2 # 路由策略 1随机 2轮询 3hash

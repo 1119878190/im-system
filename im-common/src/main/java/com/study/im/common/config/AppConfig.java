@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 public class AppConfig {
 
 
+    private String privateKey;
+
+
     /**
      * zookeeper连接地址
      */
