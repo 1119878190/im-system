@@ -9,6 +9,7 @@ import com.study.im.common.enums.ImConnectStatusEnum;
 import com.study.im.common.enums.command.SystemCommand;
 import com.study.im.common.model.UserClientDto;
 import com.study.im.common.model.UserSession;
+import com.study.im.tcp.publish.MqMessageProducer;
 import com.study.im.tcp.redis.RedisManager;
 import com.study.im.tcp.utils.SessionSocketHolder;
 import io.netty.channel.ChannelHandlerContext;
@@ -98,6 +99,8 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             // 设置读写时间时间
             ctx.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
 
+        } else {
+            MqMessageProducer.sendMessage(msg, command);
         }
     }
 
