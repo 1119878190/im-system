@@ -30,7 +30,7 @@ public class MqMessageProducer {
             o.put("imei",message.getMessageHeader().getImei());
             o.put("appId",message.getMessageHeader().getAppId());
             // 发送消息给逻辑层
-            channel.basicPublish(channelName, "", null, JSONObject.toJSONString(message).getBytes());
+            channel.basicPublish(channelName, "", null, o.toJSONString().getBytes());
         } catch (Exception e) {
             log.error("发送消息异常:{}", e.getMessage());
         }

@@ -29,6 +29,17 @@ public class AppConfig {
      */
     private Integer zkConnectTimeOut;
 
+
+    /**
+     * 发送信息是否校验关系链
+     */
+    private boolean sendMessageCheckFriend;
+
+    /**
+     * 发送消息是否校验黑名单
+     */
+    private boolean sendMessageCheckBlack;
+
     /**
      * im路由策略
      */
@@ -118,7 +129,6 @@ public class AppConfig {
      * 发送单聊消息之前
      */
     private boolean sendMessageBeforeCallback;
-
 
 
 }

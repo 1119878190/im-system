@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 消息发送者
+ * 消息发送者  发送到指定的IM服务
  *
  * @author lx
  * @date 2023/05/10
