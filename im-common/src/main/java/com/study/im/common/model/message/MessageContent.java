@@ -1,8 +1,14 @@
-package com.study.im.service.message.model;
+package com.study.im.common.model.message;
 
 import com.study.im.common.model.ClientInfo;
 import lombok.Data;
 
+/**
+ * 单聊消息内容
+ *
+ * @author lx
+ * @date 2023/06/05
+ */
 @Data
 public class MessageContent extends ClientInfo {
 

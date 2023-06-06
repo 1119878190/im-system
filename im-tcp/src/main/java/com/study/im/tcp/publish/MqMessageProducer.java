@@ -21,6 +21,12 @@ public class MqMessageProducer {
     public static void sendMessage(Message message,Integer command) {
         Channel channel = null;
         String channelName = Constants.RabbitConstants.Im2MessageService;
+
+        if (command.toString().startsWith("2")){
+            // 如果消息是 2 开头的 ，说明是群组消息
+            channelName = Constants.RabbitConstants.Im2GroupService;
+        }
+
         try {
             channel = MqFactory.getChannel(channelName);
 

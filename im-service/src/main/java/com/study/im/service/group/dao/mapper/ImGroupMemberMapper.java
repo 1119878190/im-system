@@ -1,14 +1,9 @@
 package com.study.im.service.group.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import com.study.im.service.group.dao.ImGroupMemberEntity;
 import com.study.im.service.group.model.req.GroupMemberDto;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Result;
-import org.apache.ibatis.annotations.Results;
-import org.apache.ibatis.annotations.Select;
-import org.springframework.stereotype.Repository;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -43,7 +38,7 @@ public interface ImGroupMemberMapper extends BaseMapper<ImGroupMemberEntity> {
     @Select("select " +
             " member_id " +
             " from im_group_member where app_id = #{appId} AND group_id = #{groupId} and role != 3")
-    public List<String> getGroupMemberId(Integer appId, String groupId);
+    public List<String> getGroupMemberId(@Param("appId") Integer appId, @Param("groupId") String groupId);
 
 
     @Results({

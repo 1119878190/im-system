@@ -4,7 +4,7 @@ import com.study.im.codec.message.ChatMessageAck;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
-import com.study.im.service.message.model.MessageContent;
+import com.study.im.common.model.message.MessageContent;
 import com.study.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
