@@ -13,3 +13,6 @@ systemctl start rabbitmq-server
 ```
 ./zkServer.sh start
 ```
+
+
+websocket测试页面：im-tcp/src/main/resources/web.html

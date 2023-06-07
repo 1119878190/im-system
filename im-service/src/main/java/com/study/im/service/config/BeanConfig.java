@@ -6,6 +6,7 @@ import com.study.im.common.enums.ImUrlRouteWayEnum;
 import com.study.im.common.enums.RouteHashMethodEnum;
 import com.study.im.common.route.RouteHandle;
 import com.study.im.common.route.algorithm.consistenthash.AbstractConsistentHash;
+import com.study.im.service.utils.SnowflakeIdWorker;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -59,4 +60,26 @@ public class BeanConfig {
         return new ZkClient(appConfig.getZkAddr(), appConfig.getZkConnectTimeOut());
     }
 
+
+    /**
+     * 向mybatis-plus添加自定义通用方法
+     *
+     * @return {@link EasySqlInjector}
+     */
+    @Bean
+    public EasySqlInjector easySqlInjector () {
+        return new EasySqlInjector();
+    }
+
+
+    /**
+     * 雪花算法
+     *
+     * @return {@link SnowflakeIdWorker}
+     * @throws Exception 异常
+     */
+    @Bean
+    public SnowflakeIdWorker buildSnowflakeSeq() throws Exception {
+        return new SnowflakeIdWorker(0);
+    }
 }

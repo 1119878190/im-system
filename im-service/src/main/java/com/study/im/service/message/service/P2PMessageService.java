@@ -28,6 +28,9 @@ public class P2PMessageService {
     @Autowired
     private MessageProducer messageProducer;
 
+    @Autowired
+    private MessageStoreService messageStoreService;
+
     /**
      * 单聊消息处理
      *
@@ -44,7 +47,9 @@ public class P2PMessageService {
         // 发送方和接收方是否是好友
         ResponseVO responseVO = imServerPermissionCheck(fromId, toId, messageContent);
         if (responseVO.isOk()) {
-            // 成功
+            // 消息持久化
+            messageStoreService.storeP2PMessage(messageContent);
+
             // 1.回ack给自己，表示消息已发送成功
             ack(messageContent, responseVO);
             // 2.发送消息同步到其它线端
