@@ -1,7 +1,10 @@
 package com.study.im.service.message.service;
 
 import com.study.im.common.enums.DelFlagEnum;
+import com.study.im.common.model.message.GroupChatMessageContent;
 import com.study.im.common.model.message.MessageContent;
+import com.study.im.service.group.dao.ImGroupMessageHistoryEntity;
+import com.study.im.service.group.dao.mapper.ImGroupMessageHistoryMapper;
 import com.study.im.service.message.dao.ImMessageBodyEntity;
 import com.study.im.service.message.dao.ImMessageHistoryEntity;
 import com.study.im.service.message.dao.mapper.ImMessageBodyMapper;
@@ -31,11 +34,13 @@ public class MessageStoreService {
     private ImMessageBodyMapper imMessageBodyMapper;
     @Autowired
     private ImMessageHistoryMapper imMessageHistoryMapper;
+    @Autowired
+    private ImGroupMessageHistoryMapper imGroupMessageHistoryMapper;
 
 
     /**
-     * 单聊消息持久化
-     * 由于我们单聊消息持久化采用的是 “写扩散”，故需要存两份消息历史，通过优化将消息体单独只存一份
+     * 单聊消息持久化---写扩散
+     * 由于我们单聊消息持久化采用的是 “写扩散”，故需要存两份消息历史ImMessageHistoryEntity，通过优化将消息体单独只存一份ImMessageBodyEntity
      *
      * @param messageContent 消息内容
      */
@@ -98,6 +103,39 @@ public class MessageStoreService {
         list.add(fromHistory);
         list.add(toHistory);
         return list;
+    }
+
+
+    /**
+     * 群组消息持久化---读扩散
+     *
+     *
+     * @param groupChatMessageContent 群组聊天消息内容
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void storeGroupMessage(GroupChatMessageContent groupChatMessageContent) {
+
+        // imMessageBodyEntity
+        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(groupChatMessageContent);
+        imMessageBodyMapper.insert(imMessageBodyEntity);
+
+        // ImGroupMessageHistoryEntity
+        ImGroupMessageHistoryEntity imGroupMessageHistoryEntity = extractToGroupMessageHistory(groupChatMessageContent, imMessageBodyEntity);
+        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
+
+        groupChatMessageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+    }
+
+
+
+    private ImGroupMessageHistoryEntity extractToGroupMessageHistory(GroupChatMessageContent groupChatMessageContent,
+                                                                     ImMessageBodyEntity imMessageBodyEntity){
+        ImGroupMessageHistoryEntity result = new ImGroupMessageHistoryEntity();
+        BeanUtils.copyProperties(groupChatMessageContent,result);
+        result.setGroupId(groupChatMessageContent.getGroupId());
+        result.setMessageKey(imMessageBodyEntity.getMessageKey());
+        result.setCreateTime(System.currentTimeMillis());
+        return result;
     }
 
 }

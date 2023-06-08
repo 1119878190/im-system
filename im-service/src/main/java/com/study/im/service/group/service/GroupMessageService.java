@@ -6,6 +6,7 @@ import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.GroupChatMessageContent;
 import com.study.im.service.message.service.CheckSendMessageService;
+import com.study.im.service.message.service.MessageStoreService;
 import com.study.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,11 @@ public class GroupMessageService {
     @Autowired
     private ImGroupMemberService imGroupMemberService;
 
+    @Autowired
+    private MessageStoreService messageStoreService;
+
     /**
-     * 单聊消息处理
+     * 群聊消息处理
      *
      * @param messageContent 要发送给client的消息
      */
@@ -48,6 +52,10 @@ public class GroupMessageService {
         // 前置校验
         ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
         if (responseVO.isOk()) {
+
+            // 群组消息持久化--读扩散
+            messageStoreService.storeGroupMessage(messageContent);
+
             // 成功
             // 1.回ack给自己，表示消息已发送成功
             ack(messageContent, responseVO);
