@@ -3,6 +3,7 @@ package com.study.im.service.group.controller;
 
 import com.study.im.common.ResponseVO;
 import com.study.im.service.group.model.req.*;
+import com.study.im.service.group.service.GroupMessageService;
 import com.study.im.service.group.service.ImGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,9 @@ public class ImGroupController {
 
     @Autowired
     ImGroupService groupService;
+
+    @Autowired
+    private GroupMessageService groupMessageService;
 
     @RequestMapping("/importGroup")
     public ResponseVO importGroup(@RequestBody @Validated ImportGroupReq req, Integer appId, String identifier)  {
@@ -77,5 +81,18 @@ public class ImGroupController {
         req.setOperater(identifier);
         return groupService.muteGroup(req);
     }
+
+
+    /**
+     * 群聊发送
+     *
+     * @param req   要求事情
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/sendMessage")
+    public ResponseVO sendMessage(@RequestBody @Validated SendGroupMessageReq req) {
+        return ResponseVO.successResponse(groupMessageService.send(req));
+    }
+
 
 }

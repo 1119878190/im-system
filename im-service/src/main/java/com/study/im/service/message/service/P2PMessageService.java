@@ -5,9 +5,12 @@ import com.study.im.common.ResponseVO;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.MessageContent;
+import com.study.im.service.message.model.req.SendMessageReq;
+import com.study.im.service.message.model.resp.SendMessageResp;
 import com.study.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -120,4 +123,19 @@ public class P2PMessageService {
     }
 
 
+    public SendMessageResp send(SendMessageReq req) {
+        SendMessageResp sendMessageResp = new SendMessageResp();
+        MessageContent message = new MessageContent();
+        BeanUtils.copyProperties(req,message);
+        // 持久化消息
+        messageStoreService.storeP2PMessage(message);
+        sendMessageResp.setMessageKey(message.getMessageKey());
+        sendMessageResp.setMessageTime(System.currentTimeMillis());
+
+        //2.发消息给同步在线端
+        syncToSender(message,message);
+        //3.发消息给对方在线端
+        dispatchMessage(message);
+        return sendMessageResp;
+    }
 }

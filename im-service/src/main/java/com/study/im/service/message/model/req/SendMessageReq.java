@@ -1,23 +1,22 @@
-package com.study.im.service.group.model.req;
+package com.study.im.service.message.model.req;
 
 
 import com.study.im.common.model.RequestBase;
 import lombok.Data;
 
 /**
- * @description: 群聊消息发送req
  * @author: lx
- * @version: 1.0
- */
+ * @description:
+ **/
 @Data
-public class SendGroupMessageReq extends RequestBase {
+public class SendMessageReq extends RequestBase {
 
     //客户端传的messageId
     private String messageId;
 
     private String fromId;
 
-    private String groupId;
+    private String toId;
 
     private int messageRandom;
 
