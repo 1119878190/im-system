@@ -14,6 +14,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 单聊消息处理
  *
@@ -34,6 +40,27 @@ public class P2PMessageService {
     @Autowired
     private MessageStoreService messageStoreService;
 
+
+    private final ThreadPoolExecutor threadPoolExecutor;
+
+
+    {
+        AtomicInteger atomicInteger = new AtomicInteger();
+        threadPoolExecutor = new ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS,
+                new LinkedBlockingDeque<>(1000), new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("message-process-thread-" + atomicInteger.getAndIncrement());
+                return thread;
+            }
+        });
+
+
+    }
+
+
     /**
      * 单聊消息处理
      *
@@ -50,16 +77,18 @@ public class P2PMessageService {
         // 发送方和接收方是否是好友
         ResponseVO responseVO = imServerPermissionCheck(fromId, toId, messageContent);
         if (responseVO.isOk()) {
-            // 消息持久化
-            messageStoreService.storeP2PMessage(messageContent);
 
-            // 1.回ack给自己，表示消息已发送成功
-            ack(messageContent, responseVO);
-            // 2.发送消息同步到其它线端
-            syncToSender(messageContent, messageContent);
-            // 3.发送消息给对象在线端
-            dispatchMessage(messageContent);
+            threadPoolExecutor.execute(() -> {
+                // 消息持久化
+                messageStoreService.storeP2PMessage(messageContent);
 
+                // 1.回ack给自己，表示消息已发送成功
+                ack(messageContent, responseVO);
+                // 2.发送消息同步到其它线端
+                syncToSender(messageContent, messageContent);
+                // 3.发送消息给对象在线端
+                dispatchMessage(messageContent);
+            });
         } else {
             // 告诉客户端自己发送的消息失败了
             ack(messageContent, responseVO);
@@ -126,14 +155,14 @@ public class P2PMessageService {
     public SendMessageResp send(SendMessageReq req) {
         SendMessageResp sendMessageResp = new SendMessageResp();
         MessageContent message = new MessageContent();
-        BeanUtils.copyProperties(req,message);
+        BeanUtils.copyProperties(req, message);
         // 持久化消息
         messageStoreService.storeP2PMessage(message);
         sendMessageResp.setMessageKey(message.getMessageKey());
         sendMessageResp.setMessageTime(System.currentTimeMillis());
 
         //2.发消息给同步在线端
-        syncToSender(message,message);
+        syncToSender(message, message);
         //3.发消息给对方在线端
         dispatchMessage(message);
         return sendMessageResp;
