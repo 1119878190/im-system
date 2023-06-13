@@ -2,16 +2,27 @@ package com.study.im.tcp.handler;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.study.im.codec.message.ChatMessageAck;
 import com.study.im.codec.pack.LoginPack;
 import com.study.im.codec.proto.Message;
+import com.study.im.codec.proto.MessagePack;
+import com.study.im.common.ResponseVO;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.ImConnectStatusEnum;
+import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.enums.command.SystemCommand;
 import com.study.im.common.model.UserClientDto;
 import com.study.im.common.model.UserSession;
+import com.study.im.common.model.message.CheckSendMessageReq;
+import com.study.im.common.model.message.MessageContent;
+import com.study.im.tcp.feign.FeignMessageService;
 import com.study.im.tcp.publish.MqMessageProducer;
 import com.study.im.tcp.redis.RedisManager;
 import com.study.im.tcp.utils.SessionSocketHolder;
+import feign.Feign;
+import feign.Request;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -36,8 +47,18 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
 
     private Integer brokerId;
 
-    public NettyServerHandler(Integer brokerId) {
+    private String logicUrl;
+
+    private FeignMessageService feignMessageService;
+
+    public NettyServerHandler(Integer brokerId, String logicUrl) {
         this.brokerId = brokerId;
+        feignMessageService = Feign.builder()
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                // 设置超时时间
+                .options(new Request.Options(1000, 3500))
+                .target(FeignMessageService.class, logicUrl);
     }
 
 
@@ -98,6 +119,32 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             // 心跳检测事件
             // 设置读写时间时间
             ctx.channel().attr(AttributeKey.valueOf(Constants.ReadTime)).set(System.currentTimeMillis());
+
+        } else if (command == MessageCommand.MSG_P2P.getCommand()) {
+            // 单聊消息
+            CheckSendMessageReq req = new CheckSendMessageReq();
+
+            req.setAppId(msg.getMessageHeader().getAppId());
+            req.setCommand(msg.getMessageHeader().getCommand());
+
+            MessageContent messageContent = JSON.parseObject(JSONObject.toJSONString(msg.getMessagePack()), MessageContent.class);
+            req.setFromId(messageContent.getFromId());
+            req.setToId(messageContent.getToId());
+
+            // 发送消息前置条件，判断是否被禁言，是否好友等
+            ResponseVO responseVO = feignMessageService.checkSendMessage(req);
+            if (responseVO.isOk()) {
+                // 如果成功投递到mq
+                MqMessageProducer.sendMessage(msg, command);
+            } else {
+                // 失败则直接返回ack
+                ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
+                responseVO.setData(chatMessageAck);
+                MessagePack<ResponseVO> ack = new MessagePack<>();
+                ack.setData(responseVO);
+                ack.setCommand(MessageCommand.MSG_ACK.getCommand());
+                ctx.channel().writeAndFlush(ack);
+            }
 
         } else {
             MqMessageProducer.sendMessage(msg, command);

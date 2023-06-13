@@ -68,6 +68,15 @@
             <artifactId>zkclient</artifactId>
         </dependency>
 
+        <!-- feign调用依赖 -->
+        <dependency>
+            <groupId>com.netflix.feign</groupId>
+            <artifactId>feign-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.netflix.feign</groupId>
+            <artifactId>feign-jackson</artifactId>
+        </dependency>
 
     </dependencies>
 

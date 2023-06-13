@@ -1,6 +1,7 @@
 package com.study.im.service.message.controller;
 
 import com.study.im.common.ResponseVO;
+import com.study.im.common.model.message.CheckSendMessageReq;
 import com.study.im.service.message.model.req.SendMessageReq;
 import com.study.im.service.message.service.P2PMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,15 +28,24 @@ public class MessageController {
     /**
      * 单聊发送
      *
-     * @param req   要求事情
+     * @param req 要求事情
      * @return {@link ResponseVO}
      */
     @RequestMapping("/send")
-    public ResponseVO send(@RequestBody @Validated SendMessageReq req)  {
+    public ResponseVO send(@RequestBody @Validated SendMessageReq req) {
         return ResponseVO.successResponse(p2PMessageService.send(req));
     }
 
 
-
+    /**
+     * 单聊消息发送前校验
+     *
+     * @param req req
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/checkSend")
+    public ResponseVO checkSend(@RequestBody @Validated CheckSendMessageReq req) {
+        return p2PMessageService.imServerPermissionCheck(req.getFromId(), req.getToId(), req.getAppId());
+    }
 
 }
