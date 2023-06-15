@@ -22,6 +22,22 @@ spring:
       addresses: 192.168.218.129
       username: guest
       password: guest
+      listener:
+        simple:
+          concurrency: 5
+          max-concurrency: 10
+          acknowledge-mode: MANUAL
+          prefetch: 1
+      publisher-confirms: true
+      publisher-returns: true
+      template:
+        mandatory: true
+      cache:
+        connection:
+          mode: channel
+        channel:
+          size: 36
+          checkout-timeout: 0
   application:
     name: im-core
 
