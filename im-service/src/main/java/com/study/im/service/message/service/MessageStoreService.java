@@ -1,15 +1,17 @@
 package com.study.im.service.message.service;
 
+import com.alibaba.fastjson.JSONObject;
+import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.DelFlagEnum;
+import com.study.im.common.model.message.DoStoreP2PMessageDto;
 import com.study.im.common.model.message.GroupChatMessageContent;
+import com.study.im.common.model.message.ImMessageBody;
 import com.study.im.common.model.message.MessageContent;
 import com.study.im.service.group.dao.ImGroupMessageHistoryEntity;
-import com.study.im.service.group.dao.mapper.ImGroupMessageHistoryMapper;
 import com.study.im.service.message.dao.ImMessageBodyEntity;
 import com.study.im.service.message.dao.ImMessageHistoryEntity;
-import com.study.im.service.message.dao.mapper.ImMessageBodyMapper;
-import com.study.im.service.message.dao.mapper.ImMessageHistoryMapper;
 import com.study.im.service.utils.SnowflakeIdWorker;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,7 @@ import java.util.List;
 public class MessageStoreService {
 
     @Autowired
-    private ImMessageBodyMapper imMessageBodyMapper;
-    @Autowired
-    private ImMessageHistoryMapper imMessageHistoryMapper;
-    @Autowired
-    private ImGroupMessageHistoryMapper imGroupMessageHistoryMapper;
+    private RabbitTemplate rabbitTemplate;
 
 
     /**
@@ -44,27 +42,29 @@ public class MessageStoreService {
      *
      * @param messageContent 消息内容
      */
-    @Transactional(rollbackFor = Exception.class)
     public void storeP2PMessage(MessageContent messageContent) {
-        //  messageBody
-        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(messageContent);
-        imMessageBodyMapper.insert(imMessageBodyEntity);
+        // 通过mq异步消息持久化
+        ImMessageBody imMessageBody = extractMessageBody(messageContent);
 
-        // messageHistory
-        List<ImMessageHistoryEntity> list = extractToP2PMessageHistory(messageContent, imMessageBodyEntity);
-        imMessageHistoryMapper.insertBatchSomeColumn(list);
+        messageContent.setMessageKey(imMessageBody.getMessageKey());
+        DoStoreP2PMessageDto doStoreP2PMessageDto = new DoStoreP2PMessageDto();
+        doStoreP2PMessageDto.setMessageBody(imMessageBody);
+        doStoreP2PMessageDto.setMessageContent(messageContent);
 
-        messageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+        // 通过mq异步消息持久化
+        rabbitTemplate.convertAndSend(Constants.RabbitConstants.StoreP2PMessage,
+                "", JSONObject.toJSONString(doStoreP2PMessageDto));
+
     }
 
     /**
-     * messageContent 转换 ImMessageBodyEntity消息体
+     * messageContent 转换 ImMessageBody
      *
      * @param messageContent 消息内容
-     * @return {@link ImMessageBodyEntity}
+     * @return {@link ImMessageBody}
      */
-    public ImMessageBodyEntity extractMessageBody(MessageContent messageContent) {
-        ImMessageBodyEntity messageBody = new ImMessageBodyEntity();
+    public ImMessageBody extractMessageBody(MessageContent messageContent) {
+        ImMessageBody messageBody = new ImMessageBody();
         messageBody.setAppId(messageContent.getAppId());
         messageBody.setMessageKey(SnowflakeIdWorker.nextId());
         messageBody.setCreateTime(System.currentTimeMillis());
@@ -116,14 +116,14 @@ public class MessageStoreService {
     public void storeGroupMessage(GroupChatMessageContent groupChatMessageContent) {
 
         // imMessageBodyEntity
-        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(groupChatMessageContent);
-        imMessageBodyMapper.insert(imMessageBodyEntity);
-
-        // ImGroupMessageHistoryEntity
-        ImGroupMessageHistoryEntity imGroupMessageHistoryEntity = extractToGroupMessageHistory(groupChatMessageContent, imMessageBodyEntity);
-        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
-
-        groupChatMessageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+//        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(groupChatMessageContent);
+//        imMessageBodyMapper.insert(imMessageBodyEntity);
+//
+//        // ImGroupMessageHistoryEntity
+//        ImGroupMessageHistoryEntity imGroupMessageHistoryEntity = extractToGroupMessageHistory(groupChatMessageContent, imMessageBodyEntity);
+//        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
+//
+//        groupChatMessageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
     }
 
 
