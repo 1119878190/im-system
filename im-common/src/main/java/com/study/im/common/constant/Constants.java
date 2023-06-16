@@ -129,4 +129,11 @@ public class Constants {
 
     }
 
+
+    public static class SeqConstants {
+
+        public static final String Message = "messageSep";
+
+    }
+
 }

@@ -3,12 +3,15 @@ package com.study.im.service.message.service;
 import com.study.im.codec.message.ChatMessageAck;
 import com.study.im.codec.message.MessageReceiveServerAckPack;
 import com.study.im.common.ResponseVO;
+import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.MessageContent;
 import com.study.im.common.model.message.MessageReceiveAckContent;
 import com.study.im.service.message.model.req.SendMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
+import com.study.im.service.seq.RedisSeq;
+import com.study.im.service.utils.ConversationIdGenerate;
 import com.study.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +45,9 @@ public class P2PMessageService {
 
     @Autowired
     private MessageStoreService messageStoreService;
+
+    @Autowired
+    private RedisSeq redisSeq;
 
 
     private final ThreadPoolExecutor threadPoolExecutor;
@@ -82,6 +88,13 @@ public class P2PMessageService {
 //        if (responseVO.isOk()) {
 
             threadPoolExecutor.execute(() -> {
+
+                // seq 递增标识,用户消息的有序性
+                // 生成规则： appId ： Seq ： (from + to) groupId，其中 from + to 哪个大哪个就在前面
+                long seq = redisSeq.doGetSeq(appId + ":" + Constants.SeqConstants.Message + ":" +
+                        ConversationIdGenerate.generateP2PId(fromId, toId));
+                messageContent.setMessageSequence(seq);
+
                 // 消息持久化
                 messageStoreService.storeP2PMessage(messageContent);
 
@@ -124,7 +137,7 @@ public class P2PMessageService {
     private void ack(MessageContent messageContent, ResponseVO responseVO) {
         logger.info("msg ack,msgId={},checkResult={}", messageContent.getMessageId(), responseVO.getCode());
 
-        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
+        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId(), messageContent.getMessageSequence());
         responseVO.setData(chatMessageAck);
         // 发送 ack 确认消息给发送者端
         messageProducer.sendToUserAppointClient(messageContent.getFromId(), MessageCommand.MSG_ACK, responseVO, messageContent);
