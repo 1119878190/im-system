@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.message.MessageContent;
+import com.study.im.common.model.message.MessageReceiveAckContent;
 import com.study.im.service.message.service.P2PMessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,10 @@ public class ChatOperateReceiver {
                 // 处理单聊消息
                 MessageContent messageContent = jsonObject.toJavaObject(MessageContent.class);
                 p2PMessageService.process(messageContent);
+            }else if (command.equals(MessageCommand.MSG_RECEIVE_ACK.getCommand())){
+                // 消息接收确认，由接收发主动发出
+                MessageReceiveAckContent messageContent = jsonObject.toJavaObject(MessageReceiveAckContent.class);
+                p2PMessageService.receiveMark(messageContent);
             }
             // 给 rabbitmq 发送消息确认ack，消费者确认消息
             channel.basicAck(deliveryTag, false);

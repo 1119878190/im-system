@@ -1,10 +1,12 @@
 package com.study.im.service.message.service;
 
 import com.study.im.codec.message.ChatMessageAck;
+import com.study.im.codec.message.MessageReceiveServerAckPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.MessageContent;
+import com.study.im.common.model.message.MessageReceiveAckContent;
 import com.study.im.service.message.model.req.SendMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
 import com.study.im.service.utils.MessageProducer;
@@ -14,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -82,12 +85,16 @@ public class P2PMessageService {
                 // 消息持久化
                 messageStoreService.storeP2PMessage(messageContent);
 
-                // 1.回ack给自己，表示消息已发送成功
+                // 1.回ack给自己，表示消息已发送成功至服务器
                 ack(messageContent, ResponseVO.successResponse());
                 // 2.发送消息同步到其它线端
                 syncToSender(messageContent, messageContent);
-                // 3.发送消息给对象在线端
-                dispatchMessage(messageContent);
+                // 3.发送消息给对方在线端
+                List<ClientInfo> clientInfos = dispatchMessage(messageContent);
+                if (clientInfos.isEmpty()){
+                    // 对方不在线，服务端自己发送消息确认给发送者
+                    notOnlineReceiveAck(messageContent);
+                }
             });
 //        } else {
 //            // 告诉客户端自己发送的消息失败了
@@ -102,13 +109,14 @@ public class P2PMessageService {
      * 分发消息
      *
      * @param messageContent 消息内容
+     * @return
      */
-    private void dispatchMessage(MessageContent messageContent) {
-        messageProducer.sendToUserAllClient(messageContent.getToId(), MessageCommand.MSG_P2P, messageContent, messageContent.getAppId());
+    private List<ClientInfo> dispatchMessage(MessageContent messageContent) {
+        return  messageProducer.sendToUserAllClient(messageContent.getToId(), MessageCommand.MSG_P2P, messageContent, messageContent.getAppId());
     }
 
     /**
-     * ack 确认
+     * IM 服务ack 确认， 表示消息已发送成功至服务器
      *
      * @param messageContent 消息内容
      * @param responseVO     回答签证官
@@ -167,4 +175,36 @@ public class P2PMessageService {
         dispatchMessage(message);
         return sendMessageResp;
     }
+
+
+    /**
+     * 接收端收到消息确认
+     *
+     * @param messageReceiveAckContent 消息
+     */
+    public void receiveMark(MessageReceiveAckContent messageReceiveAckContent){
+        messageProducer.sendToUserAllClient(messageReceiveAckContent.getToId(),MessageCommand.MSG_RECEIVE_ACK,
+                messageReceiveAckContent, messageReceiveAckContent.getAppId());
+    }
+
+    /**
+     * 接收端不在线，服务器代发送消息确认ack
+     *
+     * @param messageContent 消息内容
+     */
+    public void  notOnlineReceiveAck(MessageContent messageContent){
+        MessageReceiveServerAckPack pack = new MessageReceiveServerAckPack();
+        pack.setFromId(messageContent.getToId());
+        pack.setToId(messageContent.getFromId());
+        pack.setMessageKey(messageContent.getMessageKey());
+        pack.setMessageSequence(messageContent.getMessageSequence());
+        // 标记为服务器发送的消息
+        pack.setServerSend(true);
+        messageProducer.sendToUserAppointClient(messageContent.getFromId(),MessageCommand.MSG_RECEIVE_ACK,
+                pack,new ClientInfo(messageContent.getAppId(),messageContent.getClientType()
+                        ,messageContent.getImei()));
+
+    }
+
+
 }

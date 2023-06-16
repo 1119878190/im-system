@@ -13,6 +13,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -116,11 +117,18 @@ public class MessageProducer {
      * @param data    数据
      * @param appId   应用程序id
      */
-    public void sendToUserAllClient(String toId, Command command, Object data, Integer appId) {
+    public List<ClientInfo> sendToUserAllClient(String toId, Command command, Object data, Integer appId) {
         List<UserSession> userSession = userSessionUtils.getUserSession(appId, toId);
+
+        List<ClientInfo> list = new ArrayList<>();
         for (UserSession session : userSession) {
-            sendPack(toId, command, data, session);
+            boolean sendSuccess = sendPack(toId, command, data, session);
+            if (sendSuccess){
+                ClientInfo clientInfo = new ClientInfo(session.getAppId(),session.getClientType(),session.getImei());
+                list.add(clientInfo);
+            }
         }
+        return list;
     }
 
 
