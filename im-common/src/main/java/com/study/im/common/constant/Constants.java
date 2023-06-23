@@ -53,6 +53,13 @@ public class Constants {
          */
         public static final String USER_SESSION_CONSTANT = ":userSession:";
 
+
+        /**
+         * 缓存客户端消息防重，格式： appId + :cacheMessage: + messageId
+         */
+        public static final String cacheMessage = "cacheMessage";
+
+
     }
 
     public static class RabbitConstants{

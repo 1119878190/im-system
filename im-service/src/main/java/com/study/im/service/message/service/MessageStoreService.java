@@ -11,14 +11,17 @@ import com.study.im.service.group.dao.ImGroupMessageHistoryEntity;
 import com.study.im.service.message.dao.ImMessageBodyEntity;
 import com.study.im.service.message.dao.ImMessageHistoryEntity;
 import com.study.im.service.utils.SnowflakeIdWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 消息持久化
@@ -34,6 +37,9 @@ public class MessageStoreService {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     /**
@@ -109,7 +115,6 @@ public class MessageStoreService {
     /**
      * 群组消息持久化---读扩散
      *
-     *
      * @param groupChatMessageContent 群组聊天消息内容
      */
     @Transactional(rollbackFor = Exception.class)
@@ -127,15 +132,45 @@ public class MessageStoreService {
     }
 
 
-
     private ImGroupMessageHistoryEntity extractToGroupMessageHistory(GroupChatMessageContent groupChatMessageContent,
-                                                                     ImMessageBodyEntity imMessageBodyEntity){
+                                                                     ImMessageBodyEntity imMessageBodyEntity) {
         ImGroupMessageHistoryEntity result = new ImGroupMessageHistoryEntity();
-        BeanUtils.copyProperties(groupChatMessageContent,result);
+        BeanUtils.copyProperties(groupChatMessageContent, result);
         result.setGroupId(groupChatMessageContent.getGroupId());
         result.setMessageKey(imMessageBodyEntity.getMessageKey());
         result.setCreateTime(System.currentTimeMillis());
         return result;
     }
+
+
+    /**
+     * 将消息缓存
+     *
+     * @param messageContent 消息内容
+     */
+    public void setMessageFromMessageIdCache(MessageContent messageContent) {
+        // appId : cache : messageId
+        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.cacheMessage + ":" + messageContent.getMessageId();
+        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
+    }
+
+
+    /**
+     * 从缓存中查询消息
+     *
+     * @param appId     应用程序id
+     * @param messageId 消息id
+     * @return {@link MessageContent}
+     */
+    public MessageContent getMessageFromMessageIdCache(Integer appId, String messageId) {
+        // appId : cache : messageId
+        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
+        String msg = stringRedisTemplate.opsForValue().get(key);
+        if (StringUtils.isBlank(msg)) {
+            return null;
+        }
+        return JSONObject.parseObject(msg, MessageContent.class);
+    }
+
 
 }
