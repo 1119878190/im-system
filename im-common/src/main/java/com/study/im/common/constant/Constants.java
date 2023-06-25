@@ -92,6 +92,9 @@ public class Constants {
          */
         public static final String StoreP2PMessage = "storeP2PMessage";
 
+        /**
+         * 群聊消息持久化
+         */
         public static final String StoreGroupMessage = "storeGroupMessage";
 
 
@@ -140,6 +143,9 @@ public class Constants {
     public static class SeqConstants {
 
         public static final String Message = "messageSep";
+
+        public static final String GroupMessage = "groupMessageSep";
+
 
     }
 

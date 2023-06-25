@@ -2,6 +2,7 @@ package com.study.im.service.group.service;
 
 import com.study.im.codec.message.ChatMessageAck;
 import com.study.im.common.ResponseVO;
+import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.GroupChatMessageContent;
@@ -9,6 +10,7 @@ import com.study.im.service.group.model.req.SendGroupMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
 import com.study.im.service.message.service.CheckSendMessageService;
 import com.study.im.service.message.service.MessageStoreService;
+import com.study.im.service.seq.RedisSeq;
 import com.study.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 群组消息处理
@@ -41,6 +49,27 @@ public class GroupMessageService {
     @Autowired
     private MessageStoreService messageStoreService;
 
+    @Autowired
+    private RedisSeq redisSeq;
+
+
+    private final ThreadPoolExecutor threadPoolExecutor;
+
+    {
+        AtomicInteger num = new AtomicInteger(0);
+        threadPoolExecutor = new ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000), new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("message-group-thread-" + num.getAndIncrement());
+                return thread;
+            }
+        });
+    }
+
+
     /**
      * 群聊消息处理
      *
@@ -53,25 +82,38 @@ public class GroupMessageService {
         String groupId = messageContent.getGroupId();
         Integer appId = messageContent.getAppId();
         // 前置校验
-        ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
-        if (responseVO.isOk()) {
+//        ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
+        // 消息幂等性： 缓存中是否存在，存在就只发送不进行二次持久化
+        GroupChatMessageContent groupMessageCache = messageStoreService.getMessageFromMessageIdCache(appId, messageContent.getMessageId(), GroupChatMessageContent.class);
+        if (Objects.nonNull(groupMessageCache)){
+            threadPoolExecutor.execute(() -> {
+                // 1.回ack给自己，表示消息已发送成功
+                ack(groupMessageCache, ResponseVO.successResponse());
+                // 2.发送消息同步到其它线端
+                syncToSender(groupMessageCache, groupMessageCache);
+                // 3.发送消息给对象在线端
+                dispatchMessage(groupMessageCache);
+            });
+        }
 
+        // 消息有序性：递增标识seq
+        long seq = redisSeq.doGetSeq(messageContent.getAppId() + ":" + Constants.SeqConstants.GroupMessage + ":" + messageContent.getGroupId());
+        messageContent.setMessageSequence(seq);
+
+        threadPoolExecutor.execute(() -> {
             // 群组消息持久化--读扩散
             messageStoreService.storeGroupMessage(messageContent);
-
-            // 成功
             // 1.回ack给自己，表示消息已发送成功
-            ack(messageContent, responseVO);
+            ack(messageContent, ResponseVO.successResponse());
             // 2.发送消息同步到其它线端
             syncToSender(messageContent, messageContent);
             // 3.发送消息给对象在线端
             dispatchMessage(messageContent);
 
-        } else {
-            // 告诉客户端自己发送的消息失败了
-            ack(messageContent, responseVO);
-        }
+            // 存入缓存
+            messageStoreService.setMessageFromMessageIdCache(appId, messageContent.getMessageId(), messageContent);
 
+        });
 
     }
 
@@ -85,7 +127,7 @@ public class GroupMessageService {
 
         List<String> groupMemberId = imGroupMemberService.getGroupMemberId(messageContent.getGroupId(), messageContent.getAppId());
         for (String memberId : groupMemberId) {
-            if (!memberId.equals(messageContent.getFromId())){
+            if (!memberId.equals(messageContent.getFromId())) {
                 messageProducer.sendToUserAllClient(memberId,
                         GroupEventCommand.MSG_GROUP, messageContent, messageContent.getAppId());
             }
@@ -139,11 +181,10 @@ public class GroupMessageService {
     }
 
 
-
     public SendMessageResp send(SendGroupMessageReq req) {
         SendMessageResp sendMessageResp = new SendMessageResp();
         GroupChatMessageContent message = new GroupChatMessageContent();
-        BeanUtils.copyProperties(req,message);
+        BeanUtils.copyProperties(req, message);
 
         // 持久化消息
         messageStoreService.storeGroupMessage(message);
@@ -151,7 +192,7 @@ public class GroupMessageService {
         sendMessageResp.setMessageKey(message.getMessageKey());
         sendMessageResp.setMessageTime(System.currentTimeMillis());
         //2.发消息给同步在线端
-        syncToSender(message,message);
+        syncToSender(message, message);
         //3.发消息给对方在线端
         dispatchMessage(message);
 

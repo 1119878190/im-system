@@ -84,7 +84,7 @@ public class P2PMessageService {
         Integer appId = messageContent.getAppId();
 
         // 消息幂等：从缓存中获取消息，如果存在，说明已经持久化了，那么短时间内不进行二次消息持久化，只发送
-        MessageContent messageCache = messageStoreService.getMessageFromMessageIdCache(appId, messageContent.getMessageId());
+        MessageContent messageCache = messageStoreService.getMessageFromMessageIdCache(appId, messageContent.getMessageId(), MessageContent.class);
         if (Objects.nonNull(messageCache)) {
             threadPoolExecutor.execute(() -> {
                 // 1.回ack给自己，表示消息已发送成功至服务器
@@ -123,7 +123,7 @@ public class P2PMessageService {
             List<ClientInfo> clientInfos = dispatchMessage(messageContent);
 
             // 将消息缓存
-            messageStoreService.setMessageFromMessageIdCache(messageContent);
+            messageStoreService.setMessageFromMessageIdCache(appId, messageContent.getMessageId(), messageContent);
 
             if (clientInfos.isEmpty()) {
                 // 对方不在线，服务端自己发送消息确认给发送者

@@ -3,10 +3,7 @@ package com.study.im.service.message.service;
 import com.alibaba.fastjson.JSONObject;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.DelFlagEnum;
-import com.study.im.common.model.message.DoStoreP2PMessageDto;
-import com.study.im.common.model.message.GroupChatMessageContent;
-import com.study.im.common.model.message.ImMessageBody;
-import com.study.im.common.model.message.MessageContent;
+import com.study.im.common.model.message.*;
 import com.study.im.service.group.dao.ImGroupMessageHistoryEntity;
 import com.study.im.service.message.dao.ImMessageBodyEntity;
 import com.study.im.service.message.dao.ImMessageHistoryEntity;
@@ -17,7 +14,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,18 +113,17 @@ public class MessageStoreService {
      *
      * @param groupChatMessageContent 群组聊天消息内容
      */
-    @Transactional(rollbackFor = Exception.class)
     public void storeGroupMessage(GroupChatMessageContent groupChatMessageContent) {
 
-        // imMessageBodyEntity
-//        ImMessageBodyEntity imMessageBodyEntity = extractMessageBody(groupChatMessageContent);
-//        imMessageBodyMapper.insert(imMessageBodyEntity);
-//
-//        // ImGroupMessageHistoryEntity
-//        ImGroupMessageHistoryEntity imGroupMessageHistoryEntity = extractToGroupMessageHistory(groupChatMessageContent, imMessageBodyEntity);
-//        imGroupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
-//
-//        groupChatMessageContent.setMessageKey(imMessageBodyEntity.getMessageKey());
+        ImMessageBody imMessageBody = extractMessageBody(groupChatMessageContent);
+        DoStoreGroupMessageDto dto = new DoStoreGroupMessageDto();
+        dto.setGroupChatMessageContent(groupChatMessageContent);
+        dto.setMessageBody(imMessageBody);
+
+        // 通过mq异步消息持久化
+        rabbitTemplate.convertAndSend(Constants.RabbitConstants.StoreGroupMessage,
+                "", JSONObject.toJSONString(dto));
+        groupChatMessageContent.setMessageKey(imMessageBody.getMessageKey());
     }
 
 
@@ -147,10 +142,12 @@ public class MessageStoreService {
      * 将消息缓存
      *
      * @param messageContent 消息内容
+     * @param appId          应用程序id
+     * @param messageId      消息id
      */
-    public void setMessageFromMessageIdCache(MessageContent messageContent) {
+    public void setMessageFromMessageIdCache(Integer appId, String messageId, Object messageContent) {
         // appId : cache : messageId
-        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.cacheMessage + ":" + messageContent.getMessageId();
+        String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
         stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
     }
 
@@ -160,16 +157,18 @@ public class MessageStoreService {
      *
      * @param appId     应用程序id
      * @param messageId 消息id
-     * @return {@link MessageContent}
+     * @param clazz     clazz
+     * @return {@link T}
      */
-    public MessageContent getMessageFromMessageIdCache(Integer appId, String messageId) {
+    public <T> T getMessageFromMessageIdCache(Integer appId, String messageId,Class<T> clazz) {
+
         // appId : cache : messageId
         String key = appId + ":" + Constants.RedisConstants.cacheMessage + ":" + messageId;
         String msg = stringRedisTemplate.opsForValue().get(key);
         if (StringUtils.isBlank(msg)) {
             return null;
         }
-        return JSONObject.parseObject(msg, MessageContent.class);
+        return JSONObject.parseObject(msg, clazz);
     }
 
 
