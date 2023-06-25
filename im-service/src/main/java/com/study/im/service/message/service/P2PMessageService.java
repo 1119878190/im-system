@@ -89,7 +89,7 @@ public class P2PMessageService {
             threadPoolExecutor.execute(() -> {
                 // 1.回ack给自己，表示消息已发送成功至服务器
                 ack(messageCache, ResponseVO.successResponse());
-                // 2.发送消息同步到其它线端
+                // 2.发送消息同步到发送方其它线端
                 syncToSender(messageCache, messageCache);
                 // 3.发送消息给对方在线端
                 List<ClientInfo> clientInfos = dispatchMessage(messageCache);
@@ -117,7 +117,7 @@ public class P2PMessageService {
 
             // 1.回ack给自己，表示消息已发送成功至服务器
             ack(messageContent, ResponseVO.successResponse());
-            // 2.发送消息同步到其它线端
+            // 2.发送消息同步到发送方其它线端
             syncToSender(messageContent, messageContent);
             // 3.发送消息给对方在线端
             List<ClientInfo> clientInfos = dispatchMessage(messageContent);

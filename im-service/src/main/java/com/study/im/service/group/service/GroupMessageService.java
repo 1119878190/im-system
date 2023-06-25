@@ -89,9 +89,9 @@ public class GroupMessageService {
             threadPoolExecutor.execute(() -> {
                 // 1.回ack给自己，表示消息已发送成功
                 ack(groupMessageCache, ResponseVO.successResponse());
-                // 2.发送消息同步到其它线端
+                // 2.发送消息同步到本方其它线端
                 syncToSender(groupMessageCache, groupMessageCache);
-                // 3.发送消息给对象在线端
+                // 3.发送消息给对方在线端
                 dispatchMessage(groupMessageCache);
             });
         }
@@ -105,9 +105,9 @@ public class GroupMessageService {
             messageStoreService.storeGroupMessage(messageContent);
             // 1.回ack给自己，表示消息已发送成功
             ack(messageContent, ResponseVO.successResponse());
-            // 2.发送消息同步到其它线端
+            // 2.发送消息同步到本方其它线端
             syncToSender(messageContent, messageContent);
-            // 3.发送消息给对象在线端
+            // 3.发送消息给对方在线端
             dispatchMessage(messageContent);
 
             // 存入缓存
