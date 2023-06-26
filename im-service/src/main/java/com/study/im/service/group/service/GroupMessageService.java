@@ -1,11 +1,14 @@
 package com.study.im.service.group.service;
 
-import com.study.im.codec.message.ChatMessageAck;
+import com.study.im.codec.pack.message.ChatMessageAck;
+import com.study.im.codec.pack.message.MessageReadPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.GroupChatMessageContent;
+import com.study.im.common.model.message.MessageReadContent;
+import com.study.im.service.conversation.service.ConversationService;
 import com.study.im.service.group.model.req.SendGroupMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
 import com.study.im.service.message.service.CheckSendMessageService;
@@ -18,6 +21,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -52,6 +56,9 @@ public class GroupMessageService {
     @Autowired
     private RedisSeq redisSeq;
 
+    @Resource
+    private ConversationService conversationService;
+
 
     private final ThreadPoolExecutor threadPoolExecutor;
 
@@ -85,7 +92,7 @@ public class GroupMessageService {
 //        ResponseVO responseVO = imServerPermissionCheck(fromId, groupId, appId);
         // 消息幂等性： 缓存中是否存在，存在就只发送不进行二次持久化
         GroupChatMessageContent groupMessageCache = messageStoreService.getMessageFromMessageIdCache(appId, messageContent.getMessageId(), GroupChatMessageContent.class);
-        if (Objects.nonNull(groupMessageCache)){
+        if (Objects.nonNull(groupMessageCache)) {
             threadPoolExecutor.execute(() -> {
                 // 1.回ack给自己，表示消息已发送成功
                 ack(groupMessageCache, ResponseVO.successResponse());
@@ -173,7 +180,7 @@ public class GroupMessageService {
      * @param appId   appId
      * @return {@link ResponseVO}
      */
-    private ResponseVO imServerPermissionCheck(String fromId, String groupId, Integer appId) {
+    public ResponseVO imServerPermissionCheck(String fromId, String groupId, Integer appId) {
 
         // 校验是否可以发送群消息
         ResponseVO responseVO = checkSendMessageService.checkGroupMessage(fromId, groupId, appId);
@@ -197,6 +204,44 @@ public class GroupMessageService {
         dispatchMessage(message);
 
         return sendMessageResp;
+
+    }
+
+    /**
+     * 消息已读
+     *
+     * @param messageReadContent 消息读取内容
+     */
+    public void readMark(MessageReadContent messageReadContent) {
+        // 1.更新会话已读消息的seq递增标识
+        conversationService.messageMarkRead(messageReadContent);
+
+        // 2.通知消息接收方在线的端，接收方已读消息
+        MessageReadPack messageReadPack = new MessageReadPack();
+        BeanUtils.copyProperties(messageReadContent, messageReadPack);
+        syncToSender(messageReadContent, messageReadPack);
+
+        if (!messageReadContent.getFromId().equals(messageReadContent.getToId())) {
+            // 3.发送给消息发送方，告知接收方已读消息
+            messageProducer.sendToUserAllClient(messageReadContent.getToId(), GroupEventCommand.MSG_GROUP_READED_RECEIPT,
+                    messageReadPack, messageReadContent.getAppId());
+        }
+
+
+    }
+
+    /**
+     * 同步消息已读到接收方其它端
+     *
+     * @param messageReadContent 消息读取内容
+     * @param messageReadPack    消息读取包
+     */
+    private void syncToSender(MessageReadContent messageReadContent, MessageReadPack messageReadPack) {
+        // 发送给自己的其它端，某一端已读消息
+        // 消息已读command是由消息接收方发送，故这里是fromId，同步到from的其它端
+        messageProducer.sendToUserExceptClient(messageReadContent.getFromId(), GroupEventCommand.MSG_GROUP_READED_NOTIFY,
+                messageReadPack, messageReadContent);
+
 
     }
 }

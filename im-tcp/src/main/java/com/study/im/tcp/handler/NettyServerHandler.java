@@ -2,7 +2,7 @@ package com.study.im.tcp.handler;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.study.im.codec.message.ChatMessageAck;
+import com.study.im.codec.pack.message.ChatMessageAck;
 import com.study.im.codec.pack.LoginPack;
 import com.study.im.codec.proto.Message;
 import com.study.im.codec.proto.MessagePack;
@@ -140,7 +140,12 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
                 req.setToId(toId);
 
                 // 发送消息前置条件，判断是否被禁言，是否好友等
-                ResponseVO responseVO = feignMessageService.checkSendMessage(req);
+                ResponseVO responseVO;
+                if (command == MessageCommand.MSG_P2P.getCommand()) {
+                     responseVO = feignMessageService.checkSendMessage(req);
+                } else {
+                    responseVO = feignMessageService.checkGroupSendMessage(req);
+                }
                 if (responseVO.isOk()) {
                     // 如果成功投递到mq
                     MqMessageProducer.sendMessage(msg, command);

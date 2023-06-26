@@ -1,13 +1,16 @@
 package com.study.im.service.message.service;
 
-import com.study.im.codec.message.ChatMessageAck;
-import com.study.im.codec.message.MessageReceiveServerAckPack;
+import com.study.im.codec.pack.message.ChatMessageAck;
+import com.study.im.codec.pack.message.MessageReadPack;
+import com.study.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.MessageContent;
+import com.study.im.common.model.message.MessageReadContent;
 import com.study.im.common.model.message.MessageReceiveAckContent;
+import com.study.im.service.conversation.service.ConversationService;
 import com.study.im.service.message.model.req.SendMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
 import com.study.im.service.seq.RedisSeq;
@@ -49,6 +52,9 @@ public class P2PMessageService {
 
     @Autowired
     private RedisSeq redisSeq;
+
+    @Autowired
+    private ConversationService conversationService;
 
 
     private final ThreadPoolExecutor threadPoolExecutor;
@@ -236,4 +242,36 @@ public class P2PMessageService {
     }
 
 
+    /**
+     * 消息已读
+     * 1.更新会话seq
+     * 2.通知消息接收方在线的端，接收方已读消息
+     * 3.通知消息发送方，接收方已读消息
+     *
+     * @param messageReadContent 消息读取内容
+     */
+    public void readMark(MessageReadContent messageReadContent) {
+
+        // 1.更新会话已读消息的seq递增标识
+        conversationService.messageMarkRead(messageReadContent);
+
+        // 2.通知消息接收方在线的端，接收方已读消息
+        MessageReadPack messageReadPack = new MessageReadPack();
+        BeanUtils.copyProperties(messageReadContent, messageReadPack);
+        syncToSender(messageReadContent, messageReadPack);
+
+        // 3.发送给消息发送方，告知接收方已读消息
+        messageProducer.sendToUserAllClient(messageReadContent.getToId(), MessageCommand.MSG_READED_RECEIPT,
+                messageReadPack, messageReadContent.getAppId());
+    }
+
+
+    private void syncToSender(MessageReadContent messageReadContent, MessageReadPack messageReadPack) {
+        // 发送给自己的其它端，某一端已读消息
+        // 消息已读command是由消息接收方发送，故这里是fromId，同步到from的其它端
+        messageProducer.sendToUserExceptClient(messageReadContent.getFromId(), MessageCommand.MSG_READED_NOTIFY,
+                messageReadPack, messageReadContent);
+
+
+    }
 }

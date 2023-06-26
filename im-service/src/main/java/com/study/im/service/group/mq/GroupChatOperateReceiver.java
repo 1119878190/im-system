@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel;
 import com.study.im.common.constant.Constants;
 import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.model.message.GroupChatMessageContent;
+import com.study.im.common.model.message.MessageReadContent;
 import com.study.im.service.group.service.GroupMessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,10 @@ public class GroupChatOperateReceiver {
                 // 处理群聊消息
                 GroupChatMessageContent GroupChatMessageContent = jsonObject.toJavaObject(GroupChatMessageContent.class);
                 groupMessageService.process(GroupChatMessageContent);
+            }else if (command.equals(GroupEventCommand.MSG_GROUP_READED.getCommand())){
+                // 接收方，消息已读
+                MessageReadContent messageReadContent = jsonObject.toJavaObject(MessageReadContent.class);
+                groupMessageService.readMark(messageReadContent);
             }
             // 给 rabbitmq 发送消息确认ack，消费者确认消息
             channel.basicAck(deliveryTag, false);

@@ -23,4 +23,15 @@ public interface FeignMessageService {
     @RequestLine("POST /message/checkSend")
     ResponseVO checkSendMessage(CheckSendMessageReq o);
 
+
+    /**
+     * 群聊消息前置校验
+     *
+     * @param o o
+     * @return {@link ResponseVO}
+     */
+    @Headers({"Content-Type: application/json","Accept: application/json"})
+    @RequestLine("POST /message/checkGroupSend")
+    ResponseVO checkGroupSendMessage(CheckSendMessageReq o);
+
 }

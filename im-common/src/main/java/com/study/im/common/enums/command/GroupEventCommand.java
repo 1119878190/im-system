@@ -69,13 +69,13 @@ public enum GroupEventCommand implements Command {
     //群聊消息收发 2104
     MSG_GROUP(0x838),
 
-    //发送消息已读   2106
+    // 发送消息已读   2106
     MSG_GROUP_READED(0x83a),
 
-    //消息已读通知给同步端 2053
+    // 消息已读通知给同步端 2053
     MSG_GROUP_READED_NOTIFY(0x805),
 
-    //消息已读回执，给原消息发送方 2054
+    // 消息已读回执，给原消息发送方 2054
     MSG_GROUP_READED_RECEIPT(0x806),
 
     //群聊消息ack 2047

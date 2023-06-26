@@ -1,4 +1,4 @@
-package com.study.im.codec.message;
+package com.study.im.codec.pack.message;
 
 import lombok.Data;
 
