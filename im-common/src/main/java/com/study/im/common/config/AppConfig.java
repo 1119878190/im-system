@@ -131,4 +131,9 @@ public class AppConfig {
     private boolean sendMessageBeforeCallback;
 
 
+    /**
+     * 是否多端同步删除会话
+     */
+    private Integer deleteConversationSyncMode;
+
 }
