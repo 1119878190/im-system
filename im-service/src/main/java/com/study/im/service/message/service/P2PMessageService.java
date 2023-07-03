@@ -5,11 +5,13 @@ import com.study.im.codec.pack.message.MessageReadPack;
 import com.study.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.study.im.common.ResponseVO;
 import com.study.im.common.constant.Constants;
+import com.study.im.common.enums.ConversationTypeEnum;
 import com.study.im.common.enums.command.MessageCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.MessageContent;
 import com.study.im.common.model.message.MessageReadContent;
 import com.study.im.common.model.message.MessageReceiveAckContent;
+import com.study.im.common.model.message.OfflineMessageContent;
 import com.study.im.service.conversation.service.ConversationService;
 import com.study.im.service.message.model.req.SendMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
@@ -120,6 +122,12 @@ public class P2PMessageService {
 
             // 消息持久化
             messageStoreService.storeP2PMessage(messageContent);
+
+            // 存入离线消息至redis
+            OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+            BeanUtils.copyProperties(messageContent, offlineMessageContent);
+            offlineMessageContent.setConversationType(ConversationTypeEnum.P2P.getCode());
+            messageStoreService.storeOfflineMessage(offlineMessageContent);
 
             // 1.回ack给自己，表示消息已发送成功至服务器
             ack(messageContent, ResponseVO.successResponse());

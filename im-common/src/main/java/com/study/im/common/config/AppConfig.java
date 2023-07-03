@@ -136,4 +136,9 @@ public class AppConfig {
      */
     private Integer deleteConversationSyncMode;
 
+
+    /**
+     * 离线消息最大条数
+     */
+    private Integer offlineMessageCount;
 }

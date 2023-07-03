@@ -75,6 +75,7 @@ appConfig:
   sendGroupMessageAfterCallback: true # 发送群聊消息之后
   sendGroupMessageBeforeCallback: true # 发送群聊消息之前
   deleteConversationSyncMode: 1 #1多端同步删除会话
+  offlineMessageCount: 1000 #离线消息存储条数
 
 mybatis-plus:
   configuration:

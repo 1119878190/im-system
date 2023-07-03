@@ -1,5 +1,6 @@
 package com.study.im.service.group.service;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.study.im.codec.pack.message.ChatMessageAck;
 import com.study.im.codec.pack.message.MessageReadPack;
 import com.study.im.common.ResponseVO;
@@ -8,6 +9,7 @@ import com.study.im.common.enums.command.GroupEventCommand;
 import com.study.im.common.model.ClientInfo;
 import com.study.im.common.model.message.GroupChatMessageContent;
 import com.study.im.common.model.message.MessageReadContent;
+import com.study.im.common.model.message.OfflineMessageContent;
 import com.study.im.service.conversation.service.ConversationService;
 import com.study.im.service.group.model.req.SendGroupMessageReq;
 import com.study.im.service.message.model.resp.SendMessageResp;
@@ -110,6 +112,15 @@ public class GroupMessageService {
         threadPoolExecutor.execute(() -> {
             // 群组消息持久化--读扩散
             messageStoreService.storeGroupMessage(messageContent);
+
+            // 存储离线消息到redis
+            List<String> groupMemberId = imGroupMemberService.getGroupMemberId(messageContent.getGroupId(), messageContent.getAppId());
+            messageContent.setMemberId(groupMemberId);
+            OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+            BeanUtils.copyProperties(messageContent, offlineMessageContent);
+            offlineMessageContent.setToId(messageContent.getGroupId());
+            messageStoreService.storeGroupOfflineMessage(offlineMessageContent, groupMemberId);
+
             // 1.回ack给自己，表示消息已发送成功
             ack(messageContent, ResponseVO.successResponse());
             // 2.发送消息同步到本方其它线端
@@ -131,8 +142,12 @@ public class GroupMessageService {
      * @param messageContent 消息内容
      */
     private void dispatchMessage(GroupChatMessageContent messageContent) {
-
-        List<String> groupMemberId = imGroupMemberService.getGroupMemberId(messageContent.getGroupId(), messageContent.getAppId());
+        List<String> groupMemberId;
+        if (CollectionUtil.isEmpty(messageContent.getMemberId())) {
+            groupMemberId = imGroupMemberService.getGroupMemberId(messageContent.getGroupId(), messageContent.getAppId());
+        } else {
+            groupMemberId = messageContent.getMemberId();
+        }
         for (String memberId : groupMemberId) {
             if (!memberId.equals(messageContent.getFromId())) {
                 messageProducer.sendToUserAllClient(memberId,
