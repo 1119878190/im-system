@@ -32,6 +32,8 @@ public class MqMessageReceiver {
     private static void startReceiveMessage() {
         try {
             Channel channel = MqFactory.getChannel(Constants.RabbitConstants.MessageService2Im + brokerId);
+            // Declare an exchange
+            channel.exchangeDeclare(Constants.RabbitConstants.MessageService2Im, "direct");
             // Declare a queue
             channel.queueDeclare(Constants.RabbitConstants.MessageService2Im + brokerId,
                     true, false, false, null);
