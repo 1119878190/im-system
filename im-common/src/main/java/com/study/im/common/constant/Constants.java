@@ -63,6 +63,12 @@ public class Constants {
         public static final String OfflineMessage = "offlineMessage";
 
 
+        /**
+         * seq 前缀
+         */
+        public static final String SeqPrefix = "seq";
+
+
     }
 
     public static class RabbitConstants{
@@ -148,6 +154,18 @@ public class Constants {
         public static final String Message = "messageSep";
 
         public static final String GroupMessage = "groupMessageSep";
+
+        public static final String Friendship = "friendshipSeq";
+
+//        public static final String FriendshipBlack = "friendshipBlackSeq";
+
+        public static final String FriendshipRequest = "friendshipRequestSeq";
+
+        public static final String FriendshipGroup = "friendshipGrouptSeq";
+
+        public static final String Group = "groupSeq";
+
+        public static final String Conversation = "conversationSeq";
 
 
     }

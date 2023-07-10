@@ -38,7 +38,7 @@ public class ImFriendShipEntity {
     //    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private Long createTime;
     /**
-     * 好友关系序列号
+     * 好友关系序列号--用于数据拉去，大于当前seq
      */
 //    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private Long friendSequence;

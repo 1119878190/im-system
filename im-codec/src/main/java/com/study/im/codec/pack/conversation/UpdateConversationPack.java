@@ -19,4 +19,6 @@ public class UpdateConversationPack {
     private Integer conversationType;
 
 
+    private Long sequence;
+
 }
