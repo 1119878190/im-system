@@ -1,6 +1,7 @@
 package com.study.im.service.conversation.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.study.im.codec.pack.conversation.DeleteConversationPack;
 import com.study.im.codec.pack.conversation.UpdateConversationPack;
 import com.study.im.common.ResponseVO;
@@ -10,6 +11,8 @@ import com.study.im.common.enums.ConversationErrorCode;
 import com.study.im.common.enums.ConversationTypeEnum;
 import com.study.im.common.enums.command.ConversationEventCommand;
 import com.study.im.common.model.ClientInfo;
+import com.study.im.common.model.SyncReq;
+import com.study.im.common.model.SyncResp;
 import com.study.im.common.model.message.MessageReadContent;
 import com.study.im.service.conversation.dao.ImConversationSetEntity;
 import com.study.im.service.conversation.dao.mapper.ImConversationSetMapper;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -162,5 +166,42 @@ public class ConversationService {
         return ResponseVO.successResponse();
     }
 
+    /**
+     * 增量同步会话列表
+     *
+     * @param req   req
+     * @return {@link ResponseVO}
+     */
+    public ResponseVO syncConversationSet(SyncReq req) {
 
+        if(req.getMaxLimit() > 100){
+            req.setMaxLimit(100);
+        }
+
+        SyncResp<ImConversationSetEntity> resp = new SyncResp<>();
+        //seq > req.getseq limit maxLimit
+        QueryWrapper<ImConversationSetEntity> queryWrapper =
+                new QueryWrapper<>();
+        queryWrapper.eq("from_id",req.getOperater());
+        queryWrapper.gt("sequence",req.getLastSequence());
+        queryWrapper.eq("app_id",req.getAppId());
+        queryWrapper.last(" limit " + req.getMaxLimit());
+        queryWrapper.orderByAsc("sequence");
+        List<ImConversationSetEntity> list = imConversationSetMapper
+                .selectList(queryWrapper);
+
+        if(!CollectionUtils.isEmpty(list)){
+            ImConversationSetEntity maxSeqEntity = list.get(list.size() - 1);
+            resp.setDataList(list);
+            //设置最大seq
+            Long friendShipMaxSeq = imConversationSetMapper.geConversationSetMaxSeq(req.getAppId(), req.getOperater());
+            resp.setMaxSequence(friendShipMaxSeq);
+            //设置是否拉取完毕
+            resp.setCompleted(maxSeqEntity.getSequence() >= friendShipMaxSeq);
+            return ResponseVO.successResponse(resp);
+        }
+
+        resp.setCompleted(true);
+        return ResponseVO.successResponse(resp);
+    }
 }

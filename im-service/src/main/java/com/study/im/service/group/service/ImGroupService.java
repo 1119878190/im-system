@@ -1,6 +1,7 @@
 package com.study.im.service.group.service;
 
 import com.study.im.common.ResponseVO;
+import com.study.im.common.model.SyncReq;
 import com.study.im.service.group.dao.ImGroupEntity;
 import com.study.im.service.group.model.req.*;
 
@@ -83,5 +84,14 @@ public interface ImGroupService {
      * @return {@link ResponseVO}
      */
     ResponseVO muteGroup(MuteGroupReq req);
+
+
+    /**
+     * 增量同步已加入的群聊
+     *
+     * @param req 要求事情
+     * @return {@link ResponseVO}
+     */
+    ResponseVO syncJoinedGroupList(SyncReq req);
 
 }

@@ -3,6 +3,7 @@ package com.study.im.service.friendship.service;
 
 import com.study.im.common.ResponseVO;
 import com.study.im.common.model.RequestBase;
+import com.study.im.common.model.SyncReq;
 import com.study.im.service.friendship.model.req.*;
 
 /**
@@ -115,4 +116,12 @@ public interface ImFriendService {
      */
     ResponseVO checkBlack(CheckFriendShipReq req);
 
+
+    /**
+     * 增量同步好友列表
+     *
+     * @param req   要求事情
+     * @return {@link ResponseVO}
+     */
+    ResponseVO syncFriendshipList(SyncReq req);
 }

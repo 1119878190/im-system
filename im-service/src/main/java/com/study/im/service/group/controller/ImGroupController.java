@@ -2,6 +2,7 @@ package com.study.im.service.group.controller;
 
 
 import com.study.im.common.ResponseVO;
+import com.study.im.common.model.SyncReq;
 import com.study.im.service.group.model.req.*;
 import com.study.im.service.group.service.GroupMessageService;
 import com.study.im.service.group.service.ImGroupService;
@@ -95,4 +96,14 @@ public class ImGroupController {
     }
 
 
+    /**
+     * 增量同步已加入的群聊
+     *
+     * @param req        要求事情
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/syncJoinedGroup")
+    public ResponseVO syncJoinedGroup(@RequestBody @Validated SyncReq req)  {
+        return groupService.syncJoinedGroupList(req);
+    }
 }

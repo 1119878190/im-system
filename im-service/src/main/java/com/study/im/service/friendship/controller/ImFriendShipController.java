@@ -2,6 +2,7 @@ package com.study.im.service.friendship.controller;
 
 
 import com.study.im.common.ResponseVO;
+import com.study.im.common.model.SyncReq;
 import com.study.im.service.friendship.model.req.*;
 import com.study.im.service.friendship.service.ImFriendService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,5 +168,16 @@ public class ImFriendShipController {
         return imFriendShipService.checkBlack(req);
     }
 
+
+    /**
+     * 增量同步好友列表
+     *
+     * @param req   要求事情
+     * @return {@link ResponseVO}
+     */
+    @RequestMapping("/syncFriendshipList")
+    public ResponseVO syncFriendshipList(@RequestBody @Validated SyncReq req){
+        return imFriendShipService.syncFriendshipList(req);
+    }
 
 }

@@ -89,4 +89,14 @@ public interface ImFriendShipMapper extends BaseMapper<ImFriendShipEntity> {
     )
     List<CheckFriendShipResp> checkFriendShipBlackBoth(CheckFriendShipReq toId);
 
+    /**
+     * 获取最大seq
+     *
+     * @param appId    应用程序id
+     * @param operater 所属人
+     * @return {@link Long}
+     */
+    @Select(" select max(friend_sequence) from im_friendship where app_id = #{appId} AND from_id = #{userId} ")
+    Long getFriendShipMaxSeq(Integer appId, String operater);
+
 }
